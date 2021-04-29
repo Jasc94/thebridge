@@ -23,6 +23,12 @@ def f2z():
 def f1z():
     return f1y()
 
-print('f1y:', f1y())
-print('f2z:', f2z())
-print('f1z:', f1z())
+#print('f1y:', f1y())
+#print('f2z:', f2z())
+#print('f1z:', f1z())
+
+# Esta condición hace que solo cuando ejecutemos lo que está dentro de la condición desde el mismo archivo, se ejecute el programa
+# Si tratamos de ejecutar esto desde otro archivo (importanto por ejemplo), esto no se va a mostrar
+if __name__ == '__main__':
+    print('Esto está debajo de la condición __main__')
+    f1y()
