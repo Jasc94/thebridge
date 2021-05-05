@@ -72,12 +72,8 @@ while player1_board.life > 25 and player2_board.life > 25:
     print('Player 1, its your turn:\n')
     player1_guess = ship_coordenates()
 
-    # I check if player already tried that combination
-    while player2_board.pointer(player1_guess) == 'repeated':
-        print('You already tried this coordenate. Please enter another location.\n')
-        player1_guess = ship_coordenates()
-
-    # If everything is correct, then I update the situation after the attack
+    # I update the situation after the attack
+    player2_board.pointer(player1_guess)
     player2_board.board_lifes()
 
     # I show the result
@@ -97,15 +93,7 @@ while player1_board.life > 25 and player2_board.life > 25:
     player2_guess = ship_coordenates()
 
     # I update the situation after the attack
-    #player1_board.pointer(player2_guess)
-    #player1_board.board_lifes()
-
-    # I check if player already tried that combination
-    while player1_board.pointer(player2_guess) == 'repeated':
-        print('You already tried this coordenate. Please enter another location.\n')
-        player2_guess = ship_coordenates()
-
-    # If everything is correct, then I update the situation after the attack
+    player1_board.pointer(player2_guess)
     player1_board.board_lifes()
 
     # I show the result
