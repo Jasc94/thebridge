@@ -17,6 +17,7 @@ if new_or_old_game == 'new':
     # 2) Ask players for the coordenates
     print('Player 1, please place your ships:\n')
     player1_ships = ask_coordenates()
+    os.system('clear')
     print('Player 2, please place your ships:\n')
     player2_ships = ask_coordenates()
 
@@ -36,31 +37,16 @@ if new_or_old_game == 'new':
 else:
     show_saved_games()
     game_name = input('Enter the name of the game you want to load:\n')
+
     # This is how they are laoded: ['player2_front.json', 'player1_back.json', 'player2_back.json', 'player1_front.json']
     player2_board.matrix_front, player1_board.matrix_back, player2_board.matrix_back, player1_board.matrix_front = load_old_game(game_name)
     
-    # player2_board.matrix_front.index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-    # player1_board.matrix_back.index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-    # player2_board.matrix_back.index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-    # player1_board.matrix_front.index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-
-    # player2_board.matrix_front.columns = list(range(1, 11))
-    # player1_board.matrix_back.columns = list(range(1, 11))
-    # player2_board.matrix_back.columns = list(range(1, 11))
-    # player1_board.matrix_front.columns = list(range(1, 11))
-
     player1_board.board_lifes()
     player2_board.board_lifes()
 
 # 4) I update the boards lifes situation
 player1_board.board_lifes()
 player2_board.board_lifes()
-
-# print('Player 1 lifes: ', player1_board.life)
-# print(player1_board.matrix_front)
-
-# print('Player 2 lifes: ', player2_board.life)
-# print(player2_board.matrix_front)
 
 time.sleep(3)
 # Now we are all set to start the game
@@ -81,14 +67,14 @@ print(full_board, '\n')
 
 while player1_board.life > 25 and player2_board.life > 25:
 
-    print('Player 1 remaining lifes: ', player1_board.life, '\t|\t',
-          'Player 2 remaining lifes: ', player2_board.life, '\n')
-
     # Keep playing or save the game?
     keep_playing = input('Do you want to keep playing(yes) or save the game(no)?\n').lower()
+
+    # If yes, continue
     if keep_playing == 'yes':
         pass
 
+    # else, save and break the while loop
     else:
         game_name = input('Please enter a name to save the game:\n')
         dfs = [player1_board.matrix_front, player1_board.matrix_back, player2_board.matrix_front, player2_board.matrix_back]
@@ -101,17 +87,18 @@ while player1_board.life > 25 and player2_board.life > 25:
         break
     
     # To keep a track of the turns
-    print('-' * 40)
+    print('-' * 80)
     print("\nIt's the turn - {}\n".format(turn))
-    print('-' * 40)
+    print('-' * 80)
     turn += 1
 
     # 2) Player 1 turn
     # I show him oponent's front matrix
+    print("This is your oponent's board current status:\n")
     print(player2_board.matrix_front)
 
     # Then, I ask for the guess
-    print('Player 1, its your turn:\n')
+    print('\nPlayer 1, its your turn:\n')
     player1_guess = ship_coordenates()
 
     # I update the situation after the attack
@@ -126,12 +113,18 @@ while player1_board.life > 25 and player2_board.life > 25:
     # Transition time
     time.sleep(3)
 
+    # We clear the output
+    os.system('clear')
+
+    print('-' * 80)
+
     # 3) Player 2 turn
     # I show him oponent's front matrix
+    print("This is your oponent's board current status:\n")
     print(player1_board.matrix_front)
 
     # Then, I ask for the guess
-    print('Player 2, its your turn:\n')
+    print('\nPlayer 2, its your turn:\n')
     player2_guess = ship_coordenates()
 
     # I update the situation after the attack
@@ -143,13 +136,20 @@ while player1_board.life > 25 and player2_board.life > 25:
     print('Player 1 remaining lifes: ', player1_board.life, '\n')
     print(player1_board.matrix_front)
 
-    full_board = show_full_front_boards(player1_board.matrix_front, player2_board.matrix_front)
-
-    # Transition time
     time.sleep(3)
 
     # We clear the output
     os.system('clear')
+
+    full_board = show_full_front_boards(player1_board.matrix_front, player2_board.matrix_front)
+    
+    
+
+    print("\nCurrent situation of both players:\n")
+    print('Player 1 remaining lifes: ', player1_board.life, '\t|\t',
+          'Player 2 remaining lifes: ', player2_board.life, '\n')
+    print(full_board, '\n')
+    print('-' * 80, "\n")
 
 
 # ---------------------------- End of the game ----------------------------

@@ -104,6 +104,7 @@ def ask_coordenates():
 
 
 # ---------------------------- To save/load the game ----------------------------
+# To load an old game
 def load_old_game(game_name):
     # Dict to store all the dataframes that I upload with the names as keys, so that I can them match them with the respective player front/back boards
     dfs = []
@@ -132,7 +133,7 @@ def load_old_game(game_name):
     return dfs
     # This is how they are laoded: ['player2_front.json', 'player1_back.json', 'player2_back.json', 'player1_front.json']
 
-
+# To save the current game
 def save_game(dfs_list, game_name):
     # I unpack the dfs in the list
     player1_front, player1_back, player2_front, player2_back = dfs_list
@@ -156,17 +157,23 @@ def save_game(dfs_list, game_name):
 
     return '\nSuccesfully saved\n'
 
-
+# To pack the boards (dfs) so I can easier save them
 def pack_dfs_to_save():
+    # I create a list of dfs
     dfs = [player1_board.matrix_front, player1_board.matrix_back, player2_board.matrix_front, player2_board.matrix_back]
+
     return dfs
 
 # To see the saved games when choosing "load old game"
 def show_saved_games():
+    # I use a try/except, just in case the folder of "json" doesn't exist yet -> this means, there is no saved game
     try:
+        # I go up to my current folder location and append the "json"
         path = os.path.dirname(__file__) + '/json'
+        # list of all files within the folder
         files = os.listdir(path)
         print('\n')
+        # print all the files in the list
         for i in files:
             print(i)
         print('\n')
