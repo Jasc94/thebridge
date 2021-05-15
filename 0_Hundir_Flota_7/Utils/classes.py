@@ -4,13 +4,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import json
 
+
+# ---------------------------- CLASS BOARD ----------------------------
 class board:
     def __init__(self, player:str):
         # Player name
         self.player = player
+        # Board with the ships
         self.backend = self.backend_creator()
+        # Player's lifes (amount of '*' in the board)
         self.life = 0
 
+    # >>> To create the board with the ships: ~, *, X and O
     def backend_creator(self):
         # Board's index
         index = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
@@ -31,25 +36,27 @@ class board:
         df = df.T
         return df
 
-    # To plot the boards (frontend)
+    # >>> To plot the boards with the heatmap (frontend)
     def frontend_creator(self):
         # To translate the symbols into numbers that Seaborn can read
-        to_plot = self.backend.replace(['~', '*', 'O', 'X'], [1, 1, 0, -1])
+        to_plot = self.backend.replace(['~', '/', '*', 'O', 'X'], [1, 1, 1, 0, -1])
 
         # Plot the board using the dataframe
         plt.figure(figsize=(12, 8))
+        
+        # we fix center at 0, so that the 1's (~, *) are always blue and the -1's are always brown
         sns.heatmap(to_plot, cmap="BrBG", center = 0, linewidths = 0.5, linecolor = "white")
+        
+        # we'll use the title to guide the players through the game, adding the info about the 
         plt.title(f'{self.player} remaining lifes: {self.life}', fontdict = {'fontsize': 'xx-large', 'fontweight' : 'bold'})
+        
+        # From here, it's just show the plot, keep it open for X seconds and then close it
         plt.show(block=False)
-        plt.pause(3)
+        plt.pause(6)
         plt.close()
         
-    # Ship drawer
+    # >>> Ship drawer
     def ship_drawer(self, ship_info):
-        '''
-        df -> game board
-        ship_info -> list with 4 parameters: ship's size, allignment, column and row
-        ''' 
         # Matrix to draw into
         df = self.backend
 
@@ -57,27 +64,55 @@ class board:
         column, row, allignment, size = ship_info
 
         # List of indexes and equivalent numeric position
-        l1 = list(df.index)
-        l2 = list(range(len(l1)))
+        l1 = list(df.index)             # A, B, C, D, ...
+        l2 = list(range(len(l1)))       # 1, 2, 3, 4, ...
 
         # Zip both lists
-        d = dict(zip(l1, l2))
+        d = dict(zip(l1, l2))       # {'A' : 1, 'B' : 2, ...}
 
-        # First I check the allignment
         if allignment == 'h':
-            # Then I draw the ships starting from the given column and finishing in the column + size
+
+            # Paint outermost points
+            left = column - 1 if column - 1 > 0 else 0
+            right = column + size if column + size < 10 else 10
+            df.loc[row][left] = '/'
+            df.loc[row][right] = '/'
+
             for i in range(column, column + size):
+                
+                # Paint horizontal surroundings
+                above = d[row] - 1 if d[row] - 1 > 0 else 0
+                below = d[row] + 1 if d[row] + 1 < 9 else 9     # Because we're using the index, which only goes up to 9
+                df.iloc[above][i] = '/'
+                df.iloc[below][i] = '/'
+
+                # Paint the ship
                 df.loc[row][i] = '*'
-            return df
-        elif allignment == 'v':
-            # Equivalent procedure for rows
-            for i in range(d[row], d[row] + size):
-                df.iloc[i][column] = '*'
+
             return df
 
-    
-    
-    # To modify board's life
+        else:
+
+            # Paint the outermost points
+            left = d[row] - 1 if d[row] - 1 > 0 else 0
+            right = d[row] + size if d[row] + size < 10 else 10
+            df.iloc[left][column] = '/'
+            df.iloc[right][column] = '/'
+
+            for i in range(d[row], d[row] + size):
+
+                # Paint the vertical surroundings
+                above = column - 1 if column - 1 > 0 else 0
+                below = column + 1 if column + 1 < 10 else 10
+                df.iloc[i][above] = '/'
+                df.iloc[i][below] = '/'
+
+                # Paint the ship
+                df.iloc[i][column] = '*'
+
+            return df
+
+    # >>> To modify board's life
     def board_lifes(self):
         board = self.backend
 
@@ -95,12 +130,12 @@ class board:
 
         return self.life
 
-    # To draw oponent's guess
+    # >>> To draw oponent's guess
     def pointer(self, coordenate):
         column, row = coordenate
 
         # If oponent hits '~', then water
-        if self.backend.loc[row][column] == '~':
+        if self.backend.loc[row][column] == '~' or self.backend.loc[row][column] == '/':
             self.backend.loc[row][column] = 'O'
 
         # If he/she hits '*', then it's a correct guess
@@ -111,7 +146,8 @@ class board:
         else:
             return 'repeated'
         
-# ---------------------------- Class Ship ----------------------------
+
+# ---------------------------- CLASS SHIP ----------------------------
 class ship:
     def __init__(self, ship_info):
         # Unpacking the info
@@ -119,13 +155,6 @@ class ship:
         # Ship's life is equivalent to its size
         self.life = self.size
 
+    # >>> To get the ship's attributes
     def attributes(self):
-        return [self.column, self.row, self.allignment, self.size, self.life]
-
-    def modify_lifes(self):
-        if self.life > 1:
-            self.life -= 1
-            return self.life
-        elif self.life == 1:
-            self.life -= 1
-            return 'Enemy\'s ship sunk'
+        return [self.column, self.row, self.allignment, self.size]
