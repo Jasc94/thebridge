@@ -13,7 +13,7 @@ import src.utils.visualization_tb as vis
 
 
 # -------------------------- SUPPORT --------------------------
-# >>> Function to pull the data
+# >>> Function to pull the nutrition data
 @st.cache
 def get_nutrition_data():
     df_path = "../../data/Nutritional_values.csv"
@@ -22,23 +22,29 @@ def get_nutrition_data():
     df2 = md.nutrition_prep(df)
     return df2
 
-# Create the dataframe with the function
-df = get_nutrition_data()
+# >>> Function to pull the recommmended daily intake urls
+@st.cache
+def get_dailyintake_data():
+    df_path = "../../data/daily_intakes.csv"
+    df = pd.read_csv(df_path)
+    return df
 
-# >>> Some extra style
-# st.markdown(
-#     """
-#     <style>
-#     .css-1kzqdq1 e1ynspad1 {
-#         width:95%;
-#         border-collapse:collapse;
-#     }
-#     </style>
-#     """,
-#     unsafe_allow_html = True
-# )
+# >>> Function to pull the resources data
+@st.cache
+def get_resources_data():
+    path1 = "../../data"
+    path2 = "../../data/Resources_use"
+    df = md.join_resources(path1, path2)
+    return df
 
-#header = st.beta_container()
+
+# Create the dataframes with the functions
+df = get_nutrition_data()                       # For nutrition
+dailyintake_df = get_dailyintake_data()         # For daily intake
+resources_df = get_resources_data()
+
+
+# >>> Sidebar menu to navigate through sections
 menu = st.sidebar.selectbox('Menu:',
             options=["Home", "Nutrition Facts", "Nutrition Comparator", "Resources Facts",
                     "Resources Comparator"])
@@ -124,37 +130,47 @@ if menu == "Nutrition Comparator":
     # > Food items
     # 1) Pick the food items
     foodname_1 = st.sidebar.text_input("Choose a food item 1")
-    #foodname_2 = st.sidebar.text_input("Choose a food item 2")
+    foodname_2 = st.sidebar.text_input("Choose a food item 2")
 
     # 3) Calculating the dataframe
     if foodname_1 == "":
         foodname_1 = "Cornstarch"
+
+    if foodname_2 == "":
+        foodname_2 = "Cornstarch"
+
     food1_data = md.food_selector(foodname_1, df)
+    food2_data = md.food_selector(foodname_2, df)
+
+    # 4) List of items
+    food_items =[food1_data, food2_data]
 
     # > Gender and age
     # 1) Choose age and gender to calculate recommended daily intake
+    chosen_gender = st.sidebar.radio(label = "Gender", options = ["Male", "Female"], index = 0).lower()
     chosen_age = st.sidebar.slider(label = "Age", min_value = 20, max_value = 70, value = 20, step = 10)
-    chosen_gender = st.sidebar.radio(label = "Gender", options = ["Men", "Women"], index = 0)
 
     # 2) Pull data of recommended daily intake based on gender & age
-    url = "https://www.eatforhealth.gov.au/node/1813927/done?sid=806757&token=05ce5572f5618ac641c9f2395b28c59f"
-    dailyintake_s = md.dailyintake_info(url)
-    dailyintake = md.dailyintake_prep(dailyintake_s)
+    #url = "https://www.eatforhealth.gov.au/node/1813927/done?sid=806757&token=05ce5572f5618ac641c9f2395b28c59f"
+    url = md.pick_di(chosen_gender, chosen_age, dailyintake_df)
+    dailyintake = md.dailyintake_info(url)
+    dailyintake_cleaned = md.dailyintake_prep(dailyintake)
 
     
     # > Calculate food quality based on daily intake proportion
-    food1_quality = md.foodquality(food1_data, dailyintake)
+    food_quality = md.foodquality(dailyintake_cleaned, food_items)
 
 
     # >>> Site
-    st.header(f"Nutritional values for 100g of **{foodname_1}**")
+    st.header(f"Nutritional values for 100g")
+    st.subheader(f"**{foodname_1}** vs **{foodname_2}**")
 
-    #df = get_nutrition_data()
-    st.table(food1_quality.T)
+    # Comparison table
+    st.table(food_quality)
 
     #fig = vis.dailyintake_graph(food1_quality)
     #col2.pyplot(fig)
-    st.bar_chart(food1_quality.set_index("nutrient"))
+    st.bar_chart(food_quality.iloc[2])
 
     # Inputs from user to calculate the % of the nutrients daily intake
     
@@ -164,9 +180,39 @@ if menu == "Nutrition Comparator":
     #st.pyplot(fig)
 
 
-# if menu == "Top food":
-#     #TODO
-#     st.write("TODO")
+if menu == "Resources Facts":
+    # >>> User input to build tables and plots
+    # Title
+    st.sidebar.header("Play around")
+
+    # Resource
+    selected_resource = st.sidebar.selectbox(options = resources_df.columns,
+                                            label = "Select an option",
+                                            index = len(resources_df.columns) - 1)
+
+    # How big the top
+    selected_top = st.sidebar.slider(label = "Entries",
+                    min_value = 10, max_value = 50, value = 10, step = 10)
+
+
+    # Calculate df
+    resources_df_to_show = resources_df.sort_values(by = selected_resource,
+                            ascending = False).head(selected_top)
+
+
+    # >>> Site
+    # Plot
+    fig = vis.emissions_graph(resources_df_to_show, selected_resource)
+    st.pyplot(fig)
+
+    # Data
+    st.table(resources_df_to_show)
+    
+    
+
+if menu == "Resources Comparator":
+    #TODO
+    st.radio(label = "Test", options = ["option 1", "option 1", "option 1"])
 
 # if menu == "Definitions":
 #     #TODO
