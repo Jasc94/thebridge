@@ -5,11 +5,15 @@ import pandas as pd
 import sys
 import os
 
+import requests
+import webbrowser
+
 path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 sys.path.append(path)
 
 import src.utils.mining_data_tb as md
 import src.utils.visualization_tb as vis
+import src.utils.markdown as mark
 
 
 # -------------------------- SUPPORT --------------------------
@@ -47,7 +51,7 @@ resources_df = get_resources_data()
 # >>> Sidebar menu to navigate through sections
 menu = st.sidebar.selectbox('Menu:',
             options=["Home", "Nutrition Facts", "Nutrition Comparator", "Resources Facts",
-                    "Resources Comparator"])
+                    "Resources Comparator", "Flask"])
 
 # -------------------------- HOME --------------------------
 if menu == "Home":
@@ -213,6 +217,51 @@ if menu == "Resources Facts":
 if menu == "Resources Comparator":
     #TODO
     st.radio(label = "Test", options = ["option 1", "option 1", "option 1"])
+
+
+if menu == "Flask":
+    # >>> User input to pull data from server
+    # Title
+    st.sidebar.header("Choose datasets")
+
+    nutrition_checkbox = st.sidebar.checkbox(label = "Nutrition dataset")
+    resources_checkbox = st.sidebar.checkbox(label = "Resources dataset")
+    health_checkbox = st.sidebar.checkbox(label = "Health dataset")
+
+    button = st.sidebar.button("Show table")
+
+    if button:
+        if nutrition_checkbox:
+            # Pull the data from the server
+            url = "http://localhost:6060/nutrition-data"
+            nutrition_data = pd.read_json(url)
+
+            # nutrition_data_1 = nutrition_data[:round(len(nutrition_data) / 2)]
+            # nutrition_data_2 = nutrition_data[round(len(nutrition_data) / 2):]
+
+            # Streamlit output
+            st.header("Here you have the **nutrition** dataset")
+            # st.markdown(mark.get_table_download_link(nutrition_data_1), unsafe_allow_html = True)
+            # st.markdown(mark.get_table_download_link(nutrition_data_2), unsafe_allow_html = True)
+            st.table(nutrition_data.head())
+
+        if resources_checkbox:
+            # Pull the data from the server
+            url = "http://localhost:6060/resources-data"
+            resources_data = pd.read_json(url)
+            # Streamlit output
+            st.header("Here you have the **resources** dataset")
+            st.markdown(mark.get_table_download_link(resources_data), unsafe_allow_html = True)
+            st.table(resources_data.head())
+
+        if health_checkbox:
+            # Pull the data from the server
+            url = "http://localhost:6060/health-data"
+            health_data = pd.read_json(url)
+            # Streamlit output
+            st.header("Here you have the **health** dataset")
+            st.markdown(mark.get_table_download_link(health_data), unsafe_allow_html = True)
+            st.table(health_data.head())
 
 # if menu == "Definitions":
 #     #TODO
