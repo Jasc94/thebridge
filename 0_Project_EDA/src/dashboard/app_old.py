@@ -13,31 +13,40 @@ sys.path.append(path)
 
 import src.utils.mining_data_tb as md
 import src.utils.visualization_tb as vis
+import src.utils.folder_tb as fo
 import src.utils.markdown as mark
 
 
 # -------------------------- SUPPORT --------------------------
+# data folder path
+data_path = fo.path_to_folder(2, "data")
+
+
 # >>> Function to pull the nutrition data
 @st.cache
 def get_nutrition_data():
-    df_path = "../../data/Nutritional_values.csv"
+    #df_path = "../../data/Nutritional_values.csv"
+    path = data_path + "Nutritional_values.csv"
     #df_path = "0_Project_EDA/data/Nutritional_values.csv"
-    df = pd.read_csv(df_path)
+    df = pd.read_csv(path)
     df2 = md.nutrition_prep(df)
     return df2
 
 # >>> Function to pull the recommmended daily intake urls
 @st.cache
 def get_dailyintake_data():
-    df_path = "../../data/daily_intakes.csv"
-    df = pd.read_csv(df_path)
+    #df_path = "../../data/daily_intakes.csv"
+    path = data_path + "daily_intakes.csv"
+    df = pd.read_csv(path)
     return df
 
 # >>> Function to pull the resources data
 @st.cache
 def get_resources_data():
-    path1 = "../../data"
-    path2 = "../../data/Resources_use"
+    # path1 = "../../data"
+    # path2 = "../../data/Resources_use"
+    path1 = data_path
+    path2 = path = data_path + os.sep + "Resources_use"
     df = md.join_resources(path1, path2)
     return df
 
@@ -55,8 +64,10 @@ menu = st.sidebar.selectbox('Menu:',
 
 # -------------------------- HOME --------------------------
 if menu == "Home":
+    cow_path = fo.path_to_folder(2, "resources")
+
     st.title("Welcome to the Nutrition & Resources - EDA App")
-    st.image("../../resources/home_cow.jpeg")
+    st.image(cow_path + "home_cow.jpeg")
 
 
 # -------------------------- NUTRITION FACTS --------------------------
@@ -227,41 +238,55 @@ if menu == "Flask":
     nutrition_checkbox = st.sidebar.checkbox(label = "Nutrition dataset")
     resources_checkbox = st.sidebar.checkbox(label = "Resources dataset")
     health_checkbox = st.sidebar.checkbox(label = "Health dataset")
+    test = st.sidebar.checkbox(label = "Test")
+
+    password = st.sidebar.text_input("Password to access data")
 
     button = st.sidebar.button("Show table")
 
     if button:
         if nutrition_checkbox:
-            # Pull the data from the server
-            url = "http://localhost:6060/nutrition-data"
-            nutrition_data = pd.read_json(url)
+            try:
+                # Pull the data from the server
+                url = f"http://localhost:6060/nutrition-data?password={password}"
+                nutrition_data = pd.read_json(url)
 
-            # nutrition_data_1 = nutrition_data[:round(len(nutrition_data) / 2)]
-            # nutrition_data_2 = nutrition_data[round(len(nutrition_data) / 2):]
+                # nutrition_data_1 = nutrition_data[:round(len(nutrition_data) / 2)]
+                # nutrition_data_2 = nutrition_data[round(len(nutrition_data) / 2):]
 
-            # Streamlit output
-            st.header("Here you have the **nutrition** dataset")
-            # st.markdown(mark.get_table_download_link(nutrition_data_1), unsafe_allow_html = True)
-            # st.markdown(mark.get_table_download_link(nutrition_data_2), unsafe_allow_html = True)
-            st.table(nutrition_data.head())
+                # Streamlit output
+                st.header("Here you have the **nutrition** dataset")
+                # st.markdown(mark.get_table_download_link(nutrition_data_1), unsafe_allow_html = True)
+                # st.markdown(mark.get_table_download_link(nutrition_data_2), unsafe_allow_html = True)
+                st.table(nutrition_data.head())
+            except:
+                st.title("Wrong password")
+
 
         if resources_checkbox:
-            # Pull the data from the server
-            url = "http://localhost:6060/resources-data"
-            resources_data = pd.read_json(url)
-            # Streamlit output
-            st.header("Here you have the **resources** dataset")
-            st.markdown(mark.get_table_download_link(resources_data), unsafe_allow_html = True)
-            st.table(resources_data.head())
+            try:
+                # Pull the data from the server
+                url = f"http://localhost:6060/resources-data?password={password}"
+                resources_data = pd.read_json(url)
+                # Streamlit output
+                st.header("Here you have the **resources** dataset")
+                st.markdown(mark.get_table_download_link(resources_data), unsafe_allow_html = True)
+                st.table(resources_data.head())
+            except:
+                st.title("Wrong password")
+
 
         if health_checkbox:
-            # Pull the data from the server
-            url = "http://localhost:6060/health-data"
-            health_data = pd.read_json(url)
-            # Streamlit output
-            st.header("Here you have the **health** dataset")
-            st.markdown(mark.get_table_download_link(health_data), unsafe_allow_html = True)
-            st.table(health_data.head())
+            try:
+                # Pull the data from the server
+                url = f"http://localhost:6060/health-data?password={password}"
+                health_data = pd.read_json(url)
+                # Streamlit output
+                st.header("Here you have the **health** dataset")
+                st.markdown(mark.get_table_download_link(health_data), unsafe_allow_html = True)
+                st.table(health_data.head())
+            except:
+                st.title("Wrong password")
 
 # if menu == "Definitions":
 #     #TODO

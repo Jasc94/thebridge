@@ -1,3 +1,5 @@
+import os, sys
+
 # Para notebook
 def get_root_path_notebook(n):
     '''

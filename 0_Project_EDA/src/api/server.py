@@ -10,47 +10,76 @@ sys.path.append(path)
 
 import src.utils.mining_data_tb as md
 import src.utils.apis_tb as ap
+import src.utils.folder_tb as fo
+
+
+# data folder path
+data_path = fo.path_to_folder(2, "data")
 
 # Objecto Flask
 app = Flask(__name__)
 
 
 # ------------------- Flask functions -------------------
+
 @app.route("/")
 def home():
     return app.send_static_file("test.html")
 
+# >>> Function to pull the nutrition data
 @app.route("/nutrition-data", methods = ['GET'])
 def nutrition_dataframe():
-    df = pd.read_csv("0_Project_EDA/data/Nutritional_values.csv")
-    return df.to_json()
-
-@app.route("/resources-data", methods = ['GET'])
-def resources_dataframe():
-    df = pd.read_csv("0_Project_EDA/data/Food_production.csv")
-    return df.to_json()
-
-# UPDATE THE URL
-@app.route("/health-data", methods = ['GET'])
-def health_dataframe():
-    df = pd.read_csv("0_Project_EDA/data/daily_intakes.csv")
-    return df.to_json()
-
-# @app.route("/data", methods = ['GET'])
-# def data_frame():
-#     df = pd.read_csv("0_Project_EDA/data/daily_intakes.csv")
-#     df = df.to_json()
-#     return Response(df, mimetype = "application/json")
-
-
-@app.route("/data_token", methods = ['GET'])
-def data_frame_token():
     x = request.args['password']
-    if x == "1234":
-        df = pd.read_csv("0_Project_EDA/data/daily_intakes.csv")
+    if x == "12341":
+        path = data_path + os.sep + "Nutritional_values.csv"
+        df = pd.read_csv(path)
         return df.to_json()
     else:
-        return "Contraseña incorrecta"
+        return "Wrong password"
+
+# >>> Function to pull the nutrition data
+@app.route("/resources-data", methods = ['GET'])
+def resources_dataframe():
+    x = request.args['password']
+    if x == "12342":
+        path = data_path + os.sep + "Food_production.csv"
+        df = pd.read_csv(path)
+        return df.to_json()
+    else:
+        return "Wrong password"
+
+# UPDATE THE URL
+# >>> Function to pull the nutrition data
+@app.route("/health-data", methods = ['GET'])
+def health_dataframe():
+    x = request.args['password']
+    if x == "12343":
+        path = data_path + os.sep + "Food_production.csv"
+        df = pd.read_csv(path)
+        return df.to_json()
+    else:
+        return "Wrong password"
+
+# # >>> Function to pull the nutrition data
+# @app.route("/test", methods = ['GET'])
+# def test_dataframe():
+#     x = request.args['password']
+#     if x == "1234":
+#         path = data_path + os.sep + "Food_production.csv"
+#         df = pd.read_csv(path)
+#         return df.to_json()
+#     else:
+#         return "wrong password"
+
+# @app.route("/data_token", methods = ['GET'])
+# def data_frame_token():
+#     x = request.args['password']
+#     if x == "1234":
+#         df = pd.read_csv("0_Project_EDA/data/daily_intakes.csv")
+#         return df.to_json()
+#     else:
+#         return "Contraseña incorrecta"
+
 
 # ------------------- Other functions -------------------
 def main():
@@ -76,5 +105,7 @@ def main():
         print("Server settings.json doesn't allow to start server. " + 
             "Please, allow it to run it.")
 
+
+# ------------------- To run the server -------------------
 if __name__ == "__main__":
     main()

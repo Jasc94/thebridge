@@ -4,6 +4,70 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+###############################################################################################
+# ############################ -- RESOURCES FUNCTIONS -- ############################
+# >>> Changes the shape of the quality df returned by foodquality function (mining data)
+def resources_plot(resource, df):
+    # Let's do some quick plotting
+    sns.set_theme()
+    fig, ax = plt.subplots(1, 1, figsize = (15, 15))
+
+    # I keep those values that aren't NA
+    filtered_data = df[df[resource].notna()]
+    # I sort the dataframe by the variable of interest (already defined as x)
+    sorted_data = filtered_data.sort_values(by = resource, ascending = False)
+
+    # For a better view, I defined the axis and data out of the seaborn function
+    data = sorted_data
+    y = sorted_data.index
+
+    # Paint the graph
+    sns.barplot(x = resource, y = y, data = data, palette = "RdBu", ax = ax)
+
+    # Title
+    if "water" in resource.lower():
+        text_end = " measured in squared meters (m2)"
+    elif "land" in resource.lower():
+        text_end = " measured in liters (l)"
+    else:
+        text_end = " measured in kgs per kg of food"
+
+    plt.title(resource + text_end, fontdict = {'fontsize': 20,
+    'fontweight' : "bold"}, pad = 15
+    )
+
+    # Pull the name of the foods that are missing this value
+    missing_values = list(df[df[resource].isna()].index)
+    # Add it as note at the bottom of the plot
+    textstr = f"We don't have the values for the following foods:\n{missing_values}"
+    plt.text(0.25, 0.05, textstr, fontsize = 12, transform = plt.gcf().transFigure)
+
+    # In notebooks it will plot twice, unless adding plt.show() at the end of the cell
+    # That way, it associates the figure to that
+    return fig
+
+# >>> 
+def plot_resources_stats(to_plot):
+    number_of_axes = len(to_plot["Resource"].unique())
+
+    fig, axes = plt.subplots(1, number_of_axes, figsize = (15, 7))
+
+    resources = list(to_plot["Resource"].unique())
+
+    for index in range(number_of_axes):
+        sns.barplot(x = "Mean_median", y = "Values", hue = "Origin",
+                    data = to_plot[to_plot["Resource"] == resources[index]], ax = axes[index])
+        axes[index].set_title(resources[index], fontdict = {'fontsize': 14, 'fontweight' : "bold"})
+
+    return fig
+
+
+###############################################################################################
+# ############################ -- TRANSFORMATION FUNCTIONS -- ############################
+# >>> Changes the shape of the quality df returned by foodquality function (mining data)
+
+
 # -------------------------- SUPPORT FUNCTIONS --------------------------
 def show_values_on_bars(axs, h_v="v", space=0.4):
     def _show_on_single_plot(ax):
@@ -26,10 +90,24 @@ def show_values_on_bars(axs, h_v="v", space=0.4):
     else:
         _show_on_single_plot(axs)
 
+def correlation_plot(corr_df):
+    fig, ax = plt.subplots(1, 1, figsize = (10, 10))
+    sns.heatmap(corr_df, annot = True, linewidths = .1, cmap="coolwarm", ax = ax)
+
+    plt.tick_params(
+        axis='x',          # changes apply to the x-axis
+        which='both',      # both major and minor ticks are affected
+        bottom=False,      # ticks along the bottom edge are off
+        top=False,         # ticks along the top edge are off
+        labelbottom=False)
+
+    return fig
+
 
 # -------------------------- TO PLOT --------------------------
 def dailyintake_graph(df):
-    sns.set_style("whitegrid", {'grid.linestyle': '--'})
+    sns.set_theme()
+    #sns.set_style("whitegrid", {'grid.linestyle': '--'})
 
     fig, ax1 = plt.subplots(1, 1, figsize = (12, 12))
 
@@ -49,10 +127,11 @@ def dailyintake_graph(df):
     return fig
 
 def nutritionfacts_graph1(df, nutrient):
-
+    
     df = df.sort_values(by = nutrient, ascending = False)
 
-    sns.set_style("whitegrid", {'grid.linestyle': '--'})
+    sns.set_theme()
+    #sns.set_style("whitegrid", {'grid.linestyle': '--'})
 
     fig, ax1 = plt.subplots(1, 1, figsize = (12, 12))
     splot = sns.barplot(x = df.index, y = df[nutrient], data = df, palette = "coolwarm", ax = ax1)
@@ -65,30 +144,5 @@ def nutritionfacts_graph1(df, nutrient):
                     ha = 'center', va = 'center', 
                     xytext = (0, 9), 
                     textcoords = 'offset points')
-
-    return fig
-
-def emissions_graph(df, column):
-    df = df.sort_values(by = column, ascending = False)
-    df = df[df[column] > 0]
-
-    sns.set_style("whitegrid", {'grid.linestyle': '--'})
-
-    fig, ax = plt.subplots(figsize = (12, 15))
-
-    colors = list(sns.color_palette("deep"))
-
-    sns.barplot(x = column, y = df.index, data = df, color = colors[0])
-
-    show_values_on_bars(ax, "h")
-
-    land_labels = ["Land use per 1000kcal", "Land use per kg", "Land use per 100g protein"]
-    water_labels = ["Freswater withdrawls per 1000kcal", "Freswater withdrawls per kg",
-                    "Freswater withdrawls per 100g protein"]
-    emissions_labels = ["Total_emissions"]
-
-    if column in land_labels: plt.xlabel("Squared meters (m2) of CO2 per Kg of food product")
-    elif column in water_labels: plt.xlabel("Liters (l) per Kg of food product")
-    else: plt.xlabel("Kg of CO2 per Kg of food product")
 
     return fig
