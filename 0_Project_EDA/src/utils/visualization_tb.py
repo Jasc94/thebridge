@@ -64,6 +64,50 @@ def plot_resources_stats(to_plot):
 
 
 ###############################################################################################
+# ############################ -- NUTRITION FUNCTIONS -- ############################
+# >>> Changes the shape of the quality df returned by foodquality function (mining data)
+def full_comparison_plot(comparisons):
+    comparison_di, comparison_fats, comparison_cholesterol, comparison_energy = comparisons
+
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize = (20, 20))
+
+    food_groups = comparison_di["%OfDI"].unique()
+    n_colors = len(food_groups)
+
+    palette = sns.color_palette("Paired", n_colors = n_colors)
+
+    # ax1 : Daily intake
+    sns.barplot(x = "Values", y = "Nutrient", hue = "%OfDI", data = comparison_di, palette = palette, ax = ax1)
+
+    ax1.axvline(x=100, color='r', linestyle='dashed')
+
+    ax1.set_title("% Of the Recommended Daily Intake", fontdict = {'fontsize': 20,
+        'fontweight' : "bold"}, pad = 15)
+
+    # ax2: Fats
+    # This one works for the three remaining axes
+    sns.barplot(x = "Values", y = "Nutrient", hue = "Food group", data = comparison_fats, palette = palette, ax = ax2)
+
+    ax2.set_title("Fats (g)", fontdict = {'fontsize': 20,
+        'fontweight' : "bold"}, pad = 15)
+
+    # ax3: Cholesterol
+    sns.barplot(x = "Values", y = "Food group", data = comparison_cholesterol, palette = palette, ax = ax3)
+
+    ax3.set_title("Cholesterol (mg)", fontdict = {'fontsize': 20,
+        'fontweight' : "bold"}, pad = 15)
+
+    # ax4: Energy
+    sns.barplot(x = "Values", y = "Food group", data = comparison_energy, palette = palette, ax = ax4)
+
+    ax4.set_title("Energy (Kcal)", fontdict = {'fontsize': 20,
+        'fontweight' : "bold"}, pad = 15)
+
+    fig.tight_layout(pad = 3)
+
+    return fig
+
+###############################################################################################
 # ############################ -- TRANSFORMATION FUNCTIONS -- ############################
 # >>> Changes the shape of the quality df returned by foodquality function (mining data)
 

@@ -55,7 +55,7 @@ def nutrients_filter_1(num):
     daily_intake_nutrients = ["Protein (g)", "Water\n(g)", "Fiber, total dietary (g)", "Vitamin A, RAE (mcg_RAE)", "Thiamin (mg)", "Riboflavin (mg)", "Niacin (mg)", "Vitamin B-6 (mg)", "Vitamin B-12 (mcg)", "Folate, total (mcg)", "Vitamin C (mg)", "Calcium (mg)", "Iron\n(mg)", "Magnesium (mg)", "Potassium (mg)", "Sodium (mg)", "Zinc\n(mg)"]
 
     # Additional interesting nutrients to explore
-    additional_nutrients = ["Energy (kcal)", "Total Fat (g)", "Fatty acids, total saturated (g)", "Fatty acids, total monounsaturated (g)", "Fatty acids, total polyunsaturated (g)", "Cholesterol (mg)", "Vitamin D (D2 + D3) (mcg)"]
+    additional_nutrients = ["Energy (kcal)", "Total Fat (g)", "Fatty acids, total saturated (g)", "Fatty acids, total monounsaturated (g)", "Fatty acids, total polyunsaturated (g)", "Cholesterol (mg)", "Vitamin D (D2 + D3) (mcg)", "Carbohydrate (g)"]
 
     # For grouping and categorization
     support_columns = ["Main food description", "WWEIA Category number", "WWEIA Category description"]
@@ -79,7 +79,7 @@ def nutrients_filter_2(num):
     new_daily_intake_nutrients = ["Protein (g)", "Water (g)", "Fiber, total dietary (g)", "Vitamin A, RAE (mcg_RAE)", "Thiamin (mg)", "Riboflavin (mg)", "Niacin (mg)", "Vitamin B-6 (mg)", "Vitamin B-12 (mcg)", "Folate, total (mcg)", "Vitamin C (mg)", "Calcium (mg)", "Iron (mg)", "Magnesium (mg)", "Potassium (mg)", "Sodium (mg)", "Zinc (mg)"]
 
     # Additional interesting nutrients to explore
-    new_additional_nutrients = ["Energy (kcal)", "Total Fat (g)", "Fatty acids, total saturated (g)", "Fatty acids, total monounsaturated (g)", "Fatty acids, total polyunsaturated (g)", "Cholesterol (mg)", "Vitamin D (D2 + D3) (mcg)"]
+    new_additional_nutrients = ["Energy (kcal)", "Total Fat (g)", "Fatty acids, total saturated (g)", "Fatty acids, total monounsaturated (g)", "Fatty acids, total polyunsaturated (g)", "Cholesterol (mg)", "Vitamin D (D2 + D3) (mcg)", "Carbohydrate (g)"]
 
     # For grouping and categorization
     new_support_columns = ["Food name", "Category number", "Category name"]
@@ -275,7 +275,7 @@ def get_nutrition_data(path, filename):
 
 # ###
 def nutrients_stats(df):
-    nutrients_list = list(df.loc[:, "Protein (g)":"Vitamin D (D2 + D3) (mcg)"].columns)
+    nutrients_list = list(df.loc[:, "Protein (g)":"Carbohydrate (g)"].columns)
     stats = df.groupby("Category 2").agg({nutrient : np.mean for nutrient in nutrients_list})
     return stats
 
@@ -362,6 +362,49 @@ def transformation_for_barplot(quality_df):
 
     barplot_df = pd.concat(list_of_series)
     return barplot_df
+
+def full_comparison(daily_intake, df, foods):
+    ### Filter the data for later use
+    # For daily intake
+    filter_di = nutrients_filter_2(1)
+
+    # For the rest: fats + carbs, cholesterol and energy
+    filter_fats_calories = nutrients_filter_2(2)
+
+    filter_fats = [filter_fats_calories[-1]] + filter_fats_calories[1:5]
+    filter_cholesterol = filter_fats_calories[-2]
+    filter_energy = filter_fats_calories[0]
+
+    ### Daily intake comparison
+    stats_di = df[filter_di]
+
+    food_series = [df.loc[food][filter_di] for food in foods]
+
+    comparison_di = md.foodquality(daily_intake, food_series)
+    comparison_di = comparison_di.iloc[list(range(2, len(food_series) * 2 + 2, 2))]
+    comparison_di = comparison_di.unstack().reset_index()
+    comparison_di.columns = ["Nutrient", "%OfDI", "Values"]
+
+    # Fats comparison
+    stats_fats = df[filter_fats]
+    comparison_fats = stats_fats.loc[foods]
+    comparison_fats = comparison_fats.unstack()
+    comparison_fats = comparison_fats.reset_index()
+    comparison_fats.columns = ["Nutrient", "Food group", "Values"]
+
+    # Cholesterol comparison
+    comparison_cholesterol = df[filter_cholesterol]
+    comparison_cholesterol = comparison_cholesterol.loc[foods]
+    comparison_cholesterol = comparison_cholesterol.reset_index()
+    comparison_cholesterol.columns = ["Food group", "Values"]
+
+    # Kcal comparison
+    comparison_energy = df[filter_energy]
+    comparison_energy = comparison_energy.loc[foods]
+    comparison_energy = comparison_energy.reset_index()
+    comparison_energy.columns = ["Food group", "Values"]
+
+    return comparison_di, comparison_fats, comparison_cholesterol, comparison_energy
 
 ###############################################################################################
 # ############################ -- RESOURCES DATASET FUNCTIONS -- ############################
