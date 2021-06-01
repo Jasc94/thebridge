@@ -4,6 +4,7 @@ import pandas as pd
 
 import sys
 import os
+import argparse
 
 path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 sys.path.append(path)
@@ -48,40 +49,9 @@ def resources_dataframe():
     else:
         return "Wrong password"
 
-# UPDATE THE URL
-# >>> Function to pull the nutrition data
-@app.route("/health-data", methods = ['GET'])
-def health_dataframe():
-    x = request.args['password']
-    if x == "12343":
-        path = data_path + os.sep + "Food_production.csv"
-        df = pd.read_csv(path)
-        return df.to_json()
-    else:
-        return "Wrong password"
-
-# # >>> Function to pull the nutrition data
-# @app.route("/test", methods = ['GET'])
-# def test_dataframe():
-#     x = request.args['password']
-#     if x == "1234":
-#         path = data_path + os.sep + "Food_production.csv"
-#         df = pd.read_csv(path)
-#         return df.to_json()
-#     else:
-#         return "wrong password"
-
-# @app.route("/data_token", methods = ['GET'])
-# def data_frame_token():
-#     x = request.args['password']
-#     if x == "1234":
-#         df = pd.read_csv("0_Project_EDA/data/daily_intakes.csv")
-#         return df.to_json()
-#     else:
-#         return "Contraseña incorrecta"
 
 
-# ------------------- Other functions -------------------
+# ------------------- Main function -------------------
 def main():
     print("--- STARTING PROCESS ---")
     print(__file__)
@@ -108,4 +78,12 @@ def main():
 
 # ------------------- To run the server -------------------
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--password", type=str,
+                        help = "password to run the server", required = True)
+    args = parser.parse_args()
+
+    if args.password == "45395203B":
+        main()
+    else:
+        print("wrong password")

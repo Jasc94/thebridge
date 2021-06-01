@@ -8,7 +8,7 @@ import seaborn as sns
 ###############################################################################################
 # ############################ -- RESOURCES FUNCTIONS -- ############################
 # >>> Changes the shape of the quality df returned by foodquality function (mining data)
-def resources_plot(resource, df):
+def resources_plot(resource, df, entries = None):
     # Let's do some quick plotting
     sns.set_theme()
     fig, ax = plt.subplots(1, 1, figsize = (15, 15))
@@ -19,16 +19,16 @@ def resources_plot(resource, df):
     sorted_data = filtered_data.sort_values(by = resource, ascending = False)
 
     # For a better view, I defined the axis and data out of the seaborn function
-    data = sorted_data
-    y = sorted_data.index
+    data = sorted_data if entries == None else sorted_data.head(entries)
+    y = sorted_data.index if entries == None else sorted_data.head(entries).index
 
     # Paint the graph
     sns.barplot(x = resource, y = y, data = data, palette = "RdBu", ax = ax)
 
     # Title
-    if "water" in resource.lower():
+    if "land" in resource.lower():
         text_end = " measured in squared meters (m2)"
-    elif "land" in resource.lower():
+    elif "water" in resource.lower():
         text_end = " measured in liters (l)"
     else:
         text_end = " measured in kgs per kg of food"
@@ -171,22 +171,9 @@ def dailyintake_graph(df):
     return fig
 
 def nutritionfacts_graph1(df, nutrient):
-    
-    df = df.sort_values(by = nutrient, ascending = False)
-
     sns.set_theme()
-    #sns.set_style("whitegrid", {'grid.linestyle': '--'})
 
     fig, ax1 = plt.subplots(1, 1, figsize = (12, 12))
-    splot = sns.barplot(x = df.index, y = df[nutrient], data = df, palette = "coolwarm", ax = ax1)
-
-    plt.xticks(rotation = 60)
-
-    for p in splot.patches:
-        splot.annotate(format(p.get_height(), '.2f'), 
-                    (p.get_x() + p.get_width() / 2., p.get_height()), 
-                    ha = 'center', va = 'center', 
-                    xytext = (0, 9), 
-                    textcoords = 'offset points')
+    splot = sns.barplot(x = df[nutrient], y = df.index, data = df, palette = "coolwarm", ax = ax1)
 
     return fig

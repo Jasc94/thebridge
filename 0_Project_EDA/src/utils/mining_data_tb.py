@@ -15,11 +15,11 @@ import sys, os
 dir = os.path.dirname
 sys.path.append(dir(os.getcwd()))
 
-import src.utils.mining_data_tb as md
 import src.utils.folder_tb as fo
 
 
-# -------------------------------- SUPPORT FUNCTIONS --------------------------------
+###############################################################################################
+# ############################ -- GENERIC FUNCTIONS -- ############################
 def num_cleaning(x):
     try:
         return re.match(r'[\d]*[\.\d]*', x)[0]
@@ -39,18 +39,30 @@ def mapper(data):
     except:
         return data.map(num_cleaning).map(to_float)
 
-
+# ### Converts grams into liters
 def gram_to_liter(x):
     return x * 0.001
 
+# ### Convers liters into grams
 def liter_to_gram(x):
     return x * 1000
 
+
 ###############################################################################################
 # ############################ -- NUTRITION DATASET FUNCTIONS -- ############################
-# -------------------------------- FILTER FUNCTIONS --------------------------------
-# >>> To filter by nutrients (columns)
+
+# -------------------------------- FILTERING FUNCTIONS --------------------------------
+# ### To filter the RAW dataframe by nutrients (columns)
 def nutrients_filter_1(num):
+    '''
+    This function takes the raw dataframe and filters the columns leaving the ones that we need. The filtering can be done in 4 levels:
+    1 - columns required to compare with the recommended daily intake
+    2 - some additional interesting nutrients: mainly fats, carbs, etc...
+    3 - support columns, such as food description, food category, etc..
+    4 - full filter
+
+    args: num -> number between 1 and 4
+    '''
     # Key nutrients for the comparison with recommended daily intake
     daily_intake_nutrients = ["Protein (g)", "Water\n(g)", "Fiber, total dietary (g)", "Vitamin A, RAE (mcg_RAE)", "Thiamin (mg)", "Riboflavin (mg)", "Niacin (mg)", "Vitamin B-6 (mg)", "Vitamin B-12 (mcg)", "Folate, total (mcg)", "Vitamin C (mg)", "Calcium (mg)", "Iron\n(mg)", "Magnesium (mg)", "Potassium (mg)", "Sodium (mg)", "Zinc\n(mg)"]
 
@@ -73,8 +85,19 @@ def nutrients_filter_1(num):
     else:
         print("Number not allowed")
 
-# >>> To filter by nutrients (columns) after renaming
+# ### To filter the CLEAN dataframe by nutrients (columns)
 def nutrients_filter_2(num):
+    '''
+    This function is exactly the same, but with the final column names.
+    It'll be used for column renaming and after that for filtering purposes.
+
+    1 - columns required to compare with the recommended daily intake
+    2 - some additional interesting nutrients: mainly fats, carbs, etc...
+    3 - support columns, such as food description, food category, etc..
+    4 - full filter
+
+    args: num -> number between 1 and 4
+    '''
     # Key nutrients for the comparison with recommended daily intake
     new_daily_intake_nutrients = ["Protein (g)", "Water (g)", "Fiber, total dietary (g)", "Vitamin A, RAE (mcg_RAE)", "Thiamin (mg)", "Riboflavin (mg)", "Niacin (mg)", "Vitamin B-6 (mg)", "Vitamin B-12 (mcg)", "Folate, total (mcg)", "Vitamin C (mg)", "Calcium (mg)", "Iron (mg)", "Magnesium (mg)", "Potassium (mg)", "Sodium (mg)", "Zinc (mg)"]
 
@@ -97,8 +120,21 @@ def nutrients_filter_2(num):
     else:
         print("Number not allowed")
 
-# >>> To filter by categories (rows) // They are negative as it's basically noise for the study
+# ### To filter by categories (rows) // They are negative as it's basically noise for the study
 def negative_filters(filter_):
+    '''
+    This function will return columns names as a list, This will later on help us to filter out food categories in the nutrition dataframe. The purpose is to take out those foods we are not interested in analyzing, such as ice creams, pizzas, etc...
+    0 - 'Formula, ready-to-feed', 'Formula, prepared from powder', 'Formula, prepared from concentrate', 'Sugar substitutes', 'Not included in a food category'
+    1 - 'Baby food: yogurt', 'Baby food: snacks and sweets', 'Baby food: meat and dinners'
+    2 - 'Ice cream and frozen dairy desserts', 'Milk shakes and other dairy drinks', 'Cakes and pies', 'Candy not containing chocolate', 'Doughnuts, sweet rolls, pastries', 'Crackers, excludes saltines', 'Cookies and brownies', 'Biscuits, muffins, quick breads', 'Pancakes, waffles, French toast', 'Cereal bars', 'Nutrition bars', 'Saltine crackers', 'Pretzels/snack mix', 'Potato chips', 'Candy containing chocolate', 'Pancakes, waffles, French toast'
+    3 - 'Soft drinks', 'Diet soft drinks', 'Flavored or carbonated water', 'Other diet drinks', 'Beer', 'Liquor and cocktails', 'Wine', 'Nutritional beverages', 'Protein and nutritional powders', 'Sport and energy drinks', 'Diet sport and energy drinks'
+    4 - 'Burritos and tacos', 'Other sandwiches (single code)', 'Burgers (single code)', 'Egg/breakfast sandwiches (single code)', 'Frankfurter sandwiches (single code)', 'Frankfurter sandwiches (single code)', 'Vegetables on a sandwich'
+    5 - 'Rolls and buns', 'Egg rolls, dumplings, sushi', 'Pasta mixed dishes, excludes macaroni and cheese', 'Macaroni and cheese', 'Pizza', 'Meat mixed dishes', 'Stir-fry and soy-based sauce mixtures', 'Bean, pea, legume dishes', 'Seafood mixed dishes', 'Rice mixed dishes', 'Fried rice and lo/chow mein', 'Poultry mixed dishes'
+    6 - 'Dips, gravies, other sauces''Pasta sauces, tomato-based', 'Mustard and other condiments', 'Mayonnaise', 'Jams, syrups, toppings'
+    7 - full filter
+
+    args: num -> number between 0 and 7
+    '''
     # NEGATIVE FILTERS
     others = ['Formula, ready-to-feed', 'Formula, prepared from powder', 'Formula, prepared from concentrate', 'Sugar substitutes', 'Not included in a food category']
     baby_food = ['Baby food: yogurt', 'Baby food: snacks and sweets', 'Baby food: meat and dinners', ]
@@ -136,13 +172,32 @@ def negative_filters(filter_):
     else:
         return "Filter not available"
 
-# >>> To filter by categories (rows) // They are positive because they contain the foods we want to focus on
+# ### To filter by categories (rows) // They are positive because they contain the foods we want to focus on
 def positive_filters(filter_):
+    '''
+    This function will return columns names as a list, This will later on help us to filter food categories in the nutrition dataframe. The purpose is to take those foods we are interested in analyzing, such as meats, fish, soy products etc...
+    0 - 'Human milk', 'Milk, reduced fat', 'Milk, whole', 'Milk, lowfat', 'Milk, nonfat', 'Flavored milk, whole', 'Yogurt, regular', 'Yogurt, Greek'
+    1 - 'Cheese', 'Cottage/ricotta cheese'
+    2 - 'Eggs and omelets', 'Butter and animal fats'
+    3 - 'Lamb, goat, game', 'Ground beef', 'Cold cuts and cured meats', 'Bacon', 'Pork', 'Liver and organ meats', 'Frankfurters', 'Sausages'
+    4 - 'Turkey, duck, other poultry', 'Chicken, whole pieces', 'Chicken patties, nuggets and tenders'
+    5 - 'Fish', 'Shellfish'
+    6 - 'Milk substitutes'
+    7 - 'Beans, peas, legumes'
+    8 - 'Processed soy products'
+    9 - 'Nuts and seeds'
+    10 - 'Peanut butter and jelly sandwiches (single code)', 'Oatmeal'
+    11 - animal_filter
+    12 - veggie_filter
+    13 - full_positive_filter
+
+    args: num -> number between 0 and 13
+    '''
     #POSITIVE FILTERS
-    milks = ['Lamb, goat, game', 'Human milk', 'Milk, reduced fat', 'Milk, whole', 'Milk, lowfat', 'Milk, nonfat', 'Flavored milk, whole', 'Yogurt, regular', 'Yogurt, Greek']
+    milks = ['Human milk', 'Milk, reduced fat', 'Milk, whole', 'Milk, lowfat', 'Milk, nonfat', 'Flavored milk, whole', 'Yogurt, regular', 'Yogurt, Greek']
     cheese = ['Cheese', 'Cottage/ricotta cheese']
     other_animal_products = ['Eggs and omelets', 'Butter and animal fats']
-    meats = ['Ground beef', 'Cold cuts and cured meats', 'Bacon', 'Pork', 'Liver and organ meats', 'Frankfurters', 'Sausages']
+    meats = ['Lamb, goat, game', 'Ground beef', 'Cold cuts and cured meats', 'Bacon', 'Pork', 'Liver and organ meats', 'Frankfurters', 'Sausages']
     chicken = ['Turkey, duck, other poultry', 'Chicken, whole pieces', 'Chicken patties, nuggets and tenders']
     fish = ['Fish', 'Shellfish']
     milk_substitutes = ['Milk substitutes']
@@ -200,12 +255,15 @@ def positive_filters(filter_):
     else:
         return "Filter not available" 
 
-# >>> It uses the filters to return the filtered dataframe
+# ### It uses the filters to return the filtered dataframe
 def conditional(df, to_filter, negative_filter = True):
     '''
+    This function will make use of the filters (either positive_fitler or negative_filter) to filter the rows of the dataframe according to the Category Name.
+    It only accepts one filter at the time.
+
     df : dataframe to filter
     to_filter : filter that will be used
-    out : if True, it will filter out and if False, it will simply filter. By default, is True.
+    negative_filter : if True, it will filter out and if False, it will simply filter. By default, is True.
     '''
     if negative_filter == True:
         filter_ = negative_filters(to_filter)
@@ -214,8 +272,15 @@ def conditional(df, to_filter, negative_filter = True):
     filter_ = positive_filters(to_filter)
     return df[df["Category name"].isin(filter_)].index
 
-# >>> It applies several filters at the time
+# ### It applies several filters at the time
 def several_filters(df, to_filter_list, negative_filter = True):
+    '''
+    This function makes use of the conditional function to filter the dataframe by one or more filters at the same time.
+
+    df : dataframe to filter
+    to_filter : filter that will be used
+    negative_filter : if True, it will filter out and if False, it will simply filter. By default, is True.
+    '''
 
     if negative_filter == False:
         positive_df = pd.DataFrame(columns = df.columns)
@@ -234,10 +299,29 @@ def several_filters(df, to_filter_list, negative_filter = True):
 
         return df
 
+# ### This function allows us to filter the columns of the dataframe by nutrient
+def nutrient_selector(nutrientname, df):
+    '''
+    This function allows us to filter the columns of the dataframe by nutrient.
+
+    args:
+    nutrientname : nutrient to filter on
+    df : dataframe to apply the filter to
+    '''
+    try:
+        columns = ["Category name", "Category 2", "Category 3", nutrientname]
+        return df[columns].sort_values(by = nutrientname, ascending = False)
+    except:
+        return "More than one row selected"
 
 # -------------------------------- DATA EXTRACTION --------------------------------
-# >>> Prepares the data
+# ### Prepares the data
 def nutrition_data_prep(df):
+    '''
+    This function prepares the dataframe by fitlering the columns we need, renaming them, and adding two extra categories for better analysis.
+    
+    args: df -> dataframe
+    '''
     # Step 1: Filtering the columns I need
     df = df[nutrients_filter_1(4)]
 
@@ -252,8 +336,8 @@ def nutrition_data_prep(df):
 
     category_3 = ["animal", "veggie"]
 
-    df["Category 2"] = None
-    df["Category 3"] = None
+    df["Category 2"] = "_others"
+    df["Category 3"] = "_others"
 
     for ind, val in enumerate(category_2):
         condition = conditional(df, ind, False)
@@ -265,16 +349,28 @@ def nutrition_data_prep(df):
 
     return df
 
-# >>> Using all the functions together, delivers the ready-to-use dataframe
+# ### Using all the functions together, delivers the ready-to-use dataframe
 def get_nutrition_data(path, filename):
+    '''
+    Making use of the nutrition_data_prep function, this function takes the file path and returns the cleaned and transformed dataframe.
+
+    args :
+    path -> file path
+    filename -> filename (end of the path)
+    '''
     df = pd.read_excel(path + filename, skiprows = 1)
 
     df = nutrition_data_prep(df)
 
     return df
 
-# ###
+# ### To calculate center measures of the dataframe
 def nutrients_stats(df):
+    '''
+    This function groups the dataframe by "Category 2" and calculates the mean of the groups.
+
+    args : df -> dataframe
+    '''
     nutrients_list = list(df.loc[:, "Protein (g)":"Carbohydrate (g)"].columns)
     stats = df.groupby("Category 2").agg({nutrient : np.mean for nutrient in nutrients_list})
     return stats
@@ -282,13 +378,27 @@ def nutrients_stats(df):
 
 ###############################################################################################
 # ############################ -- DAILY INTAKE FUNCTIONS -- ############################
-# >>> Using gender and age, pick the corresponding daily intake
+# ### Using gender and age, pick the corresponding daily intake
 def pick_daily_intake(gender, age, df):
+    '''
+    The function goes to the daily intake csv file, where all the links are stored and with the given parameters, returns the corresponding url.
+
+    args :
+    gender -> male / female
+    age -> multiple of 10, between 20 and 70
+    df -> dataframe with the urls
+    '''
     url = df[(df["gender"] == gender) & (df["age"] == age)]["url"].values[0]
     return url
 
-# >>> To pull the data from the website
+# ### To pull the data from the website
 def daily_intake_info(url):
+    '''
+    This function takes the url (return by pick_daily_intake) and pulls the daily intake data from it. It returns a pandas Series
+
+    args :
+    url -> url where daily intake data is stored
+    '''
     r = requests.get(url)
     soup = BeautifulSoup(r.text, "lxml")
 
@@ -306,8 +416,14 @@ def daily_intake_info(url):
 
     return s
 
-# >>> To prepare the data
+# ### To prepare the data
 def daily_intake_prep(serie):
+    '''
+    This function cleans the data pull from the url and organize it in a way that we can later use it for comparisons. It returns a pandas Series.
+
+    args :
+    serie : pandas Series
+    '''
     serie = mapper(serie)
     serie.drop("Iodine", inplace = True)
     serie.name = "Daily_Intake"
@@ -315,25 +431,41 @@ def daily_intake_prep(serie):
     serie["Water (g)"] = liter_to_gram(serie["Water (g)"])
     return serie
 
-# >>> Using all the functions together, delivers the ready-to-use dataframe
-def get_daily_intake_data(path, filename, gender, age):
-    # Put together the path and pull the data
-    full_path = path + filename
-    df = pd.read_csv(full_path)
+# ### Using all the functions together, delivers the ready-to-use dataframe
+def get_daily_intake_data(gender, age, df):
+    '''
+    This function makes will return the daily intake data for a given gender and age, by calling other functions to clean the daily intake data.
 
-    # Take the corresponding url according to gender and age
-    url = pick_daily_intake(gender, age, df)
+    args :
+    gender -> male/female
+    age -> multiple of 10, between 20 adn 70
+    df -> dataframe where links are stored
+    '''
+    try:
+        # Take the corresponding url according to gender and age
+        url = pick_daily_intake(gender, age, df)
 
-    # Take the info from the url and put it in a Serie
-    serie = daily_intake_info(url)
+        # Take the info from the url and put it in a Serie
+        serie = daily_intake_info(url)
 
-    # Data cleaning and processing -> final output: ready-to-use Serie
-    data = daily_intake_prep(serie)
+        # Data cleaning and processing -> final output: ready-to-use Serie
+        data = daily_intake_prep(serie)
 
-    return data
+        return data
 
-# >>> To compare foods with the recommended daily intake
+    except:
+        return "Out of index"
+
+
+# ### To compare foods with the recommended daily intake
 def foodquality(dailyintake, foods):
+    '''
+    This function will take the given foods and compared them one by one with the given daily intake. It returns a dataframe
+
+    args:
+    dailyintake -> dailyintake serie
+    foods -> list of food series to compare with the daily intake one
+    '''
     df = pd.DataFrame(dailyintake)
     count = 1
     for food in foods:
@@ -344,8 +476,13 @@ def foodquality(dailyintake, foods):
 
     return df.T
 
-# >>> To compare foods with the recommended daily intake
+# ### To compare foods with the recommended daily intake
 def transformation_for_barplot(quality_df):
+    '''
+    This function takes the dataframe resulting from foodquality and return a new one ready-to-plot for barplots.
+
+    args : quality_df -> dataframe resulting from foodquality function.
+    '''
     count = 2
     list_of_series = []
 
@@ -363,7 +500,16 @@ def transformation_for_barplot(quality_df):
     barplot_df = pd.concat(list_of_series)
     return barplot_df
 
+# ### This function makes a full comparison: daily intake, carbs & fats, cholesterol and energy
 def full_comparison(daily_intake, df, foods):
+    '''
+    This function makes following comparison between foods: vs daily intake, fats & carbs, cholesterol and energy.
+
+    args : 
+    daily_intake -> daily intake serie with the cleaned data
+    df -> dataframe where the foods are
+    foods -> list of food names to compare with the daily intake, and then do the other comparisons. They should be in the dataframe.
+    '''
     ### Filter the data for later use
     # For daily intake
     filter_di = nutrients_filter_2(1)
@@ -380,7 +526,7 @@ def full_comparison(daily_intake, df, foods):
 
     food_series = [df.loc[food][filter_di] for food in foods]
 
-    comparison_di = md.foodquality(daily_intake, food_series)
+    comparison_di = foodquality(daily_intake, food_series)
     comparison_di = comparison_di.iloc[list(range(2, len(food_series) * 2 + 2, 2))]
     comparison_di = comparison_di.unstack().reset_index()
     comparison_di.columns = ["Nutrient", "%OfDI", "Values"]
@@ -408,8 +554,13 @@ def full_comparison(daily_intake, df, foods):
 
 ###############################################################################################
 # ############################ -- RESOURCES DATASET FUNCTIONS -- ############################
-# >>> To prepare the land use data
+# ### To prepare the land use data
 def land_use_prep(path):
+    '''
+    This function follows the path and pulls the land use data from the different files and then merges it. It returns a dataframe.
+
+    args : path -> path to folder with the land use files
+    '''
 
     # I pull the data and do some manipulation
     land_use_kcal = pd.read_csv(path + "/land-use-kcal-poore.csv").drop(["Code", "Year"], axis = 1)
@@ -425,8 +576,13 @@ def land_use_prep(path):
 
     return land_use
 
-# >>> To prepare the water use data
+# ### To prepare the water use data
 def water_use_prep(path):
+    '''
+    This function follows the path and pulls the land use data from the different files and then merges it. It returns a dataframe.
+
+    args : path -> path to folder with the water use files
+    '''
 
     # I pull the data and do some manipulation
     water_use_kcal = pd.read_csv(path + "/freshwater-withdrawals-per-kcal.csv").drop(["Code", "Year"], axis = 1)
@@ -442,16 +598,28 @@ def water_use_prep(path):
     
     return water_use
 
-# >>> To prepare thegeneral data (emissions)
+# ### To prepare thegeneral data (emissions)
 def general_prep(path):
+    '''
+    This function follows the path and pulls the emissions data from the different files and does some cleaning of the data. It returns a dataframe.
+
+    args : path -> path to folder with the water use files
+    '''
     general = pd.read_csv(path + "Food_production.csv")
     general = general[["Food product", "Total_emissions"]]
     general.columns = ["Food", "Total_emissions"]
 
     return general
 
-# >>> Join all the data in one dataframe
+# ### Join all the data in one dataframe
 def join_resources(path1, path2):
+    '''
+    This function calls the land_use, water_use and general functions and joins the resulting dataframes. It returns a cleaned dataframe.
+
+    args :
+    path1 -> path to land use folder
+    path2 -> path to water use folder
+    '''
     # Cleaned general data
     general = general_prep(path1)
 
@@ -466,8 +634,13 @@ def join_resources(path1, path2):
     resources = resources.set_index("Food")
     return resources
 
-# >>> 
+# ### 
 def combine_data(column1, column2, df):
+    '''
+    This function combines two foods' values in the resources data. For instancem "Tofu" and "Tofu (soybeans)", as they are the same food, and one has the missing values of the other.
+
+    
+    '''
     # To store the new values of combining both columns
     new_values = []
 
@@ -485,7 +658,7 @@ def combine_data(column1, column2, df):
     df = pd.DataFrame(new_values, index = df.loc[column1].index, columns = [column1 + "_"])
     return df.T
 
-# >>> 
+# ### 
 def get_resources_data(path1, path2):
     df = join_resources(path1, path2)
 
@@ -508,13 +681,13 @@ def get_resources_data(path1, path2):
 
     return df
 
-# >>> 
+# ### 
 def resources_stats(df, resources_list):
     stats = df.groupby("Origin").agg({resource : (np.mean, np.median) for resource in resources_list})
     
     return stats
 
-# >>> 
+# ### 
 def stats_to_plot(stats):
     to_plot = stats.unstack()
     to_plot = to_plot.reset_index()
