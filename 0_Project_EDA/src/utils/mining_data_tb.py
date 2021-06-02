@@ -15,11 +15,14 @@ import sys, os
 dir = os.path.dirname
 sys.path.append(dir(os.getcwd()))
 
-import src.utils.folder_tb as fo
+#import src.utils.folder_tb as fo
 
 
 ###############################################################################################
 # ############################ -- GENERIC FUNCTIONS -- ############################
+def to_string(x):
+    return str(x)
+
 def num_cleaning(x):
     try:
         return re.match(r'[\d]*[\.\d]*', x)[0]
@@ -46,6 +49,21 @@ def gram_to_liter(x):
 # ### Convers liters into grams
 def liter_to_gram(x):
     return x * 1000
+
+# ### To find column in dataframe with the most duplicates
+def check_duplicates(df):
+    keys = []
+    values = []
+
+    for column in df.columns:
+        duplicated = df[column].duplicated().sum()
+        keys.append(column)
+        values.append(duplicated)
+    
+    duplicates = dict(zip(keys, values))
+    max_key = max(duplicates, key = duplicates.get)
+    
+    return max_key
 
 
 ###############################################################################################

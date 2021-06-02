@@ -53,10 +53,11 @@ resources_df, nutrition_df, food_groups_stats, daily_intake_df = get_data()
 def home():
     # path to file with a picture of a cow
     cow_path = fo.path_to_folder(2, "resources")
-    cow_file = "home_cow.jpeg"
+    cow_file = "home_picture.jpeg"
 
     # show title and image
-    st.title("Welcome to the Nutrition & Resources - EDA App")
+    st.title("Nutrition & Resources")
+    st.header("The efficiency of the foods we eat")
     st.image(cow_path + cow_file)
 
 # ### This function shows the resources facts section
