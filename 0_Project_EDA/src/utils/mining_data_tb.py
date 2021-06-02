@@ -639,7 +639,10 @@ def combine_data(column1, column2, df):
     '''
     This function combines two foods' values in the resources data. For instancem "Tofu" and "Tofu (soybeans)", as they are the same food, and one has the missing values of the other.
 
-    
+    args :
+    column1 -> Should be the name of the food1 in the dataframe
+    column2 -> Should be the name of the food2 in the dataframe
+    df -> dataframe we pull the data from according to the given names
     '''
     # To store the new values of combining both columns
     new_values = []
@@ -658,7 +661,7 @@ def combine_data(column1, column2, df):
     df = pd.DataFrame(new_values, index = df.loc[column1].index, columns = [column1 + "_"])
     return df.T
 
-# ### 
+# ### Final function to get ready-to-use resources data
 def get_resources_data(path1, path2):
     df = join_resources(path1, path2)
 
@@ -681,14 +684,26 @@ def get_resources_data(path1, path2):
 
     return df
 
-# ### 
+# ### Stats for a joint plot
 def resources_stats(df, resources_list):
+    '''
+    This function calculates the center measures for the given resources belonging to the given dataframe.
+
+    args : 
+    df -> dataframe with the resources (cleaned)
+    resources_list -> resources to be compared
+    '''
     stats = df.groupby("Origin").agg({resource : (np.mean, np.median) for resource in resources_list})
     
     return stats
 
-# ### 
+# ### Tranformation of the stats for later plot (bar plot)
 def stats_to_plot(stats):
+    '''
+    This function organizes the dataframe in a way that can be then plot with a bar graph.
+
+    args : stats -> dataframe with the stats for the resources
+    '''
     to_plot = stats.unstack()
     to_plot = to_plot.reset_index()
     to_plot.columns = ["Resource", "Mean_median", "Origin", "Values"]

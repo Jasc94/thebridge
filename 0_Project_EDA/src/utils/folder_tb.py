@@ -1,6 +1,13 @@
 import sys, os
 
 def path_to_folder(up, folder = ""):
+    '''
+    Function that calculates the path to a folder
+
+    args :
+    up -> how many levels you want to go up
+    folder -> once you've gone up "up" levels, the folder you want to open
+    '''
     # to better use the function
     dir = os.path.dirname
 

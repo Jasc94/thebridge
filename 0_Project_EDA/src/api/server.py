@@ -14,44 +14,56 @@ import src.utils.apis_tb as ap
 import src.utils.folder_tb as fo
 
 
-# data folder path
+# path to "data" folder
 data_path = fo.path_to_folder(2, "data")
 
-# Objecto Flask
+# OFlask object
 app = Flask(__name__)
 
 
-# ------------------- Flask functions -------------------
+###############################################################################################
+# ############################ -- FLASK FUNCTIONS -- ############################
 
+# ### Function for the server "home"
 @app.route("/")
 def home():
+    # Return a basic html
     return app.send_static_file("test.html")
 
-# >>> Function to pull the nutrition data
+# ### Function to pull the nutrition data
 @app.route("/nutrition-data", methods = ['GET'])
 def nutrition_dataframe():
+    # password request
     x = request.args['password']
+
+    # check if the password is correct, and if so, return the data
     if x == "12341":
         path = data_path + os.sep + "Nutritional_values.csv"
         df = pd.read_csv(path)
         return df.to_json()
+    # else, return an error message
     else:
         return "Wrong password"
 
-# >>> Function to pull the nutrition data
+# ### Function to pull the nutrition data
 @app.route("/resources-data", methods = ['GET'])
 def resources_dataframe():
+    # password request
     x = request.args['password']
+
+    # check if the password is correct, and if so, return the data
     if x == "12342":
         path = data_path + os.sep + "Food_production.csv"
         df = pd.read_csv(path)
         return df.to_json()
+    # else, return an error message
     else:
         return "Wrong password"
 
 
-
-# ------------------- Main function -------------------
+###############################################################################################
+# ############################ -- MAIN FUNCTIONS -- ############################
+# ### Function to run the server
 def main():
     print("--- STARTING PROCESS ---")
     print(__file__)
@@ -76,14 +88,19 @@ def main():
             "Please, allow it to run it.")
 
 
-# ------------------- To run the server -------------------
+###############################################################################################
+# ############################ -- TO RUN THE SERVER -- ############################
 if __name__ == "__main__":
+    # before running the server, ask through the terminal for a password
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--password", type=str,
                         help = "password to run the server", required = True)
     args = parser.parse_args()
 
+    # if password is ok, run the server
     if args.password == "45395203B":
         main()
+
+    # else, error message
     else:
         print("wrong password")
