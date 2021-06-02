@@ -40,10 +40,16 @@ def get_data():
     filename2 = "daily_intakes.csv"
     daily_intake_df = pd.read_csv(path4 + filename2)
 
-    return resources_df, nutrition_df, food_groups_stats, daily_intake_df
+    # Data sources
+    path5 = fo.path_to_folder(2, "documents") + "Data_sources.md"
+
+    with open(path5, 'r') as file:
+        data_sources = file.read()
+
+    return resources_df, nutrition_df, food_groups_stats, daily_intake_df, data_sources
 
 # Store the data in dfs
-resources_df, nutrition_df, food_groups_stats, daily_intake_df = get_data()
+resources_df, nutrition_df, food_groups_stats, daily_intake_df, data_sources = get_data()
 
 
 ###############################################################################################
@@ -226,6 +232,10 @@ def nutrition_facts():
 
         if filter_button:
             st.table(foods_filtered)
+
+# ### This function shows the flask interface
+def glosary():
+    st.write(data_sources)
 
 # ### This function shows the flask interface
 def flask_interface():

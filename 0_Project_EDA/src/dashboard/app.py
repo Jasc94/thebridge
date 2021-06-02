@@ -30,10 +30,13 @@ if menu == "Home":
 if menu == "Resources Facts":
     da.resources_facts()
 
-
 # ### NUTRITION FACTS
 if menu == "Nutrition Facts":
     da.nutrition_facts()
+
+# ### GLOSARY
+if menu == "Glosary":
+    da.glosary()
 
 # ### FLASK
 if menu == "Flask":
