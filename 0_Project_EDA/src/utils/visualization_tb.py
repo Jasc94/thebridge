@@ -135,7 +135,7 @@ def full_comparison_plot(comparisons):
     return fig
 
 ###############################################################################################
-# ############################ -- TRANSFORMATION FUNCTIONS -- ############################
+# ############################ -- SUPPORT PLOTS -- ############################
 # -------------------------- SUPPORT FUNCTIONS --------------------------
 
 # ### In the end I didn't use this function, but at this point I'm afraid of deleting it
@@ -179,6 +179,31 @@ def correlation_plot(corr_df):
         labelbottom=False)
 
     return fig
+
+def hist_and_box_plots(df, start, stop = None, bins = 30):
+    '''
+    Function to plot the distribution and box plots. It helps identify center measures and outliers. It returns the figure, so you need to put a plt.show() after this function to avoid having it double plotted.
+
+    args :
+    df -> dataframe where the info
+    start -> start column for the plot
+    stop -> stop column for the plot. By default, it's None. So, it plots until the last row
+    bins -> number of bins for the histogram. By default, it's set to 30.
+    '''
+
+    if stop == None:
+        # For column in the specified range of the dataframe, plot histogram and boxplot
+        for column in df.columns[start:]:
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (14, 6))
+            sns.histplot(df[column], bins = bins, ax = ax1)
+            sns.boxplot(x = column, data = df, ax = ax2)
+        return fig
+    else:
+        for column in df.columns[start:stop]:
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (14, 6))
+            sns.histplot(df[column], bins = bins, ax = ax1)
+            sns.boxplot(x = column, data = df, ax = ax2)
+        return fig
 
 
 # -------------------------- TO PLOT --------------------------
