@@ -1,5 +1,8 @@
 ## Función para crear varios gráficos a la vez
 
+import seaborn
+import matplotlib.pyplot as plt
+
 def graphs():
     #TODO
 
