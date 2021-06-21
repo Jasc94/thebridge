@@ -4,3 +4,7 @@ sql_server_settings.json
 0_Project_EDA/data
 bicis.zip
 201906_Usage_Bicimad.json
+
+0_exploration.ipynb
+
+*__pycache__*
