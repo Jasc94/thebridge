@@ -22,3 +22,15 @@ SVM:
 KNN:
     -> Overfitting
     -> Resultados bajos en test
+
+
+GradientBoostingClassifier:
+    -> Overfitting
+    -> Extremadamente lento
+
+
+#######################################
+
+Mejor modelo hasta el momento:
+
+    ---- LogisticRegression ----
