@@ -2,11 +2,16 @@ Files to use:
 
 Demographics:
     - DEMO
+        > RIDAGEYR      -> Age in years of the participant at the time of screening. Individuals 80 and over are topcoded at 80 years of age.	
+        > RIAGENDR      -> Gender of the participant
+
 
 Dietary (en revisión):
     - DR1IFF
     - DR2IFF
     - DR1TOT
+        > DR1TALCO      -> Alcohol (gm)	
+        > DR1TCALC      -> 
     - DR2TOT
 
 
