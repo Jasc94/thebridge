@@ -6,6 +6,8 @@ import lxml
 import numpy as np
 import pandas as pd
 
+import sys, os
+
 ##################################################### DATA EXTRACTION #####################################################
 
 # All the variables are encoded and for the actual names and descriptions, I need to pull the data from the website
@@ -53,3 +55,32 @@ def df_creator(field_list):
 #########
 def ready_to_use(url):
     return df_creator(obtain_row_info(obtain_rows(url)))
+
+
+##################################################### DATA WRANGLING #####################################################
+#########
+def read_data(up_levels, folder):
+    dirname = os.path.dirname
+    sep = os.sep
+
+    path = dirname(__file__)
+    for i in range(up_levels): path = dirname(path)
+
+    data_path = path + sep + "data" + sep + folder
+
+    data_dfs = {}
+    for file_ in os.listdir(data_path):
+        if file_ != "history":
+            # Path to file
+            filepath = data_path + sep + file_
+
+            # Reading as dataframe
+            df = pd.read_csv(filepath, index_col = 0)
+            df["SEQN"] = df["SEQN"].map(int)
+            df.set_index("SEQN", inplace = True)
+
+            # Saving it in a dictionary
+            dict_key = file_[:-4].lower()
+            data_dfs[dict_key] = df
+
+    return data_dfs
