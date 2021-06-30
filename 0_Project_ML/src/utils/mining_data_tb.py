@@ -71,16 +71,24 @@ def read_data(up_levels, folder):
     data_dfs = {}
     for file_ in os.listdir(data_path):
         if file_ != "history":
-            # Path to file
-            filepath = data_path + sep + file_
+            try:
+                # Path to file
+                filepath = data_path + sep + file_
 
-            # Reading as dataframe
-            df = pd.read_csv(filepath, index_col = 0)
-            df["SEQN"] = df["SEQN"].map(int)
-            df.set_index("SEQN", inplace = True)
+                # Reading as dataframe
+                df = pd.read_csv(filepath, index_col = 0)
+                df["SEQN"] = df["SEQN"].map(int)
+                df.set_index("SEQN", inplace = True)
 
-            # Saving it in a dictionary
-            dict_key = file_[:-4].lower()
-            data_dfs[dict_key] = df
+                # Saving it in a dictionary
+                dict_key = file_[:-4].lower()
+                data_dfs[dict_key] = df
+            except:
+                pass
 
     return data_dfs
+
+#########
+def var_descr_detector(var_name, vars_df):
+    descr = vars_df[vars_df["vAr_nAmE"] == var_name]["var_descr"].values[0]
+    return descr
