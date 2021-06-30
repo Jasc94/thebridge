@@ -28,14 +28,14 @@
 
 *Tutorials*: https://calendly.com/gabrielvazqueztb
 
-**Teacher Assistant**: *Clara Piniella Martinez*
+**Teacher Assistant**: *Borja Puig de la Bellacasa*
 
-- clara.piniella@thebridgeschool.es
+- borja@thebridgeschool.es
 
-*Tutorials*: https://calendly.com/clapiniella
+*Tutorials*: https://calendly.com/borpuig/15min
 
-**Teacher Assistant**: *Diomedes Barbero Martinez*
+**Teacher Assistant**: *Leonardo Sánchez*
 
-- diomedes@thebridgeschool.es
+- leonardo@thebridgeschool.es
 
-*Tutorials*: https://calendly.com/diomedes
+*Tutorials*: https://calendly.com/leo-sanchez 
