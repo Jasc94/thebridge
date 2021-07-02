@@ -90,5 +90,8 @@ def read_data(up_levels, folder):
 
 #########
 def var_descr_detector(var_name, vars_df):
-    descr = vars_df[vars_df["vAr_nAmE"] == var_name]["var_descr"].values[0]
-    return descr
+    try:
+        descr = vars_df[vars_df["vAr_nAmE"] == var_name]["var_descr"].values[0]
+        return descr
+    except:
+        return var_name
