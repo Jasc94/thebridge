@@ -8,6 +8,10 @@ import pandas as pd
 
 import sys, os
 
+
+dirname = os.path.dirname
+sep = os.sep
+
 ##################################################### DATA EXTRACTION #####################################################
 
 # All the variables are encoded and for the actual names and descriptions, I need to pull the data from the website
@@ -60,8 +64,6 @@ def ready_to_use(url):
 ##################################################### DATA WRANGLING #####################################################
 #########
 def read_data(up_levels, folder):
-    dirname = os.path.dirname
-    sep = os.sep
 
     path = dirname(__file__)
     for i in range(up_levels): path = dirname(path)
@@ -87,6 +89,26 @@ def read_data(up_levels, folder):
                 pass
 
     return data_dfs
+
+#########
+def read_all_data(up_levels, folders):
+    dfs_list = []
+
+    for folder in folders:
+        dfs_list.append(read_data(up_levels, folder))
+
+    return dfs_list
+
+#########
+def var_data(up_levels, filepath):
+
+    path = dirname(__file__)
+    for i in range(up_levels): path = dirname(path)
+
+    fullpath = path + sep + filepath
+    data = pd.read_csv(fullpath, index_col = 0)
+
+    return data
 
 #########
 def var_descr_detector(var_name, vars_df):
