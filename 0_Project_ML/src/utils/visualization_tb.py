@@ -26,7 +26,7 @@ def n_rows(df, n_columns):
     return axes_rows
 
 #####
-def rows_plotter(df, n_columns, kind, figsize, var_names = None):
+def rows_plotter(df, n_columns, kind, figsize, features_names = None):
     fig, axes = plt.subplots(1, n_columns, figsize = figsize)
     count = 0
 
@@ -41,7 +41,7 @@ def rows_plotter(df, n_columns, kind, figsize, var_names = None):
             sns.histplot(df.iloc[:, count], ax = axes[column], bins = 30)
 
         try:
-            axes[column].set(xlabel = md.var_descr_detector(df.iloc[:, count].name, var_names))
+            axes[column].set(xlabel = features_names[count])
         except:
             pass
 
@@ -53,7 +53,7 @@ def rows_plotter(df, n_columns, kind, figsize, var_names = None):
     return fig
     
 #####
-def multi_axes_plotter(df, n_columns, kind, figsize, var_names = None):
+def multi_axes_plotter(df, n_columns, kind, figsize, features_names = None):
     # Calculating the number of rows from number of columns and variables to plot
     n_rows_ = n_rows(df, n_columns)
 
@@ -82,7 +82,7 @@ def multi_axes_plotter(df, n_columns, kind, figsize, var_names = None):
                 sns.histplot(df.iloc[:, count], ax = axes[row][column], bins = 30)
 
             try:
-                axes[row][column].set(xlabel = md.var_descr_detector(df.iloc[:, count].name, var_names))
+                axes[row][column].set(xlabel = features_names[count])
             except:
                 pass
 
