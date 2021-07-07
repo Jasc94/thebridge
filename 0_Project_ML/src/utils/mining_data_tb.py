@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 import html
 import lxml
+import json
 
 import numpy as np
 import pandas as pd
@@ -14,12 +15,13 @@ from imblearn.over_sampling import SMOTE
 
 import sys, os
 
-
+# Helpers
+abspath = os.path.abspath
 dirname = os.path.dirname
 sep = os.sep
 
-##################################################### DATA EXTRACTION #####################################################
 
+##################################################### DATA EXTRACTION #####################################################
 # All the variables are encoded and for the actual names and descriptions, I need to pull the data from the website
 
 ######### 
@@ -76,7 +78,7 @@ class variables_data:
     #########
     def load_data(self, up_levels, filepath):
 
-        path = dirname(__file__)
+        path = dirname(abspath(__file__))
         for i in range(up_levels): path = dirname(path)
 
         fullpath = path + sep + filepath
@@ -106,6 +108,7 @@ class dataset:
         # Raw data
         self.__dfs_list = []
         self.__joined_dfs = {}
+        self.raw_df = None
         self.df = None
 
         # Processed data for ML
@@ -119,7 +122,7 @@ class dataset:
 
     #########
     def __read_data(self, up_levels, folder):
-        path = dirname(os.getcwd())
+        path = dirname(abspath(__file__))
         for i in range(up_levels): path = dirname(path)
 
         data_path = path + sep + "data" + sep + folder
@@ -188,6 +191,7 @@ class dataset:
 
         for name, df in self.__joined_dfs.items():
             self.df = pd.merge(self.df, df, how = "outer", on = "SEQN")
+            self.raw_df = pd.merge(self.df, df, how = "outer", on = "SEQN")
 
     #########
     def load_data(self, up_levels, folders):
@@ -399,3 +403,33 @@ class ml_model:
     def ml_predictions(self, to_predict):
         new_predictions = self.model.predict(to_predict)
         return new_predictions
+
+
+##################################################### OTHERS #####################################################
+#########
+def read_json(fullpath):
+    '''
+    This function reads the json an returns it in a format we can work with it
+
+    args : fullpath -> path to the json to be read
+    '''
+    with open(fullpath, "r") as json_file:
+        read_json_ = json.load(json_file)
+
+    return read_json_
+
+#########
+def read_json_to_dict(json_fullpath):
+    """
+    Read a json and return a object created from it.
+    Args:
+        json_fullpath: json fullpath
+
+    Returns: json object.
+    """
+    try:
+        with open(json_fullpath, 'r+') as outfile:
+            read_json = json.load(outfile)
+        return read_json
+    except Exception as error:
+        raise ValueError(error)

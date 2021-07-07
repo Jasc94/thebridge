@@ -7,8 +7,12 @@ import matplotlib.pyplot as plt
 
 import os, sys
 
+# Helpers
+abspath = os.path.abspath
 dirname = os.path.dirname
-current_folder = dirname(__file__)
+sep = os.sep
+
+current_folder = dirname(abspath(__file__))
 sys.path.append(current_folder)
 
 import mining_data_tb as md
