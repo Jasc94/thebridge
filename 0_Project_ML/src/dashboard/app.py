@@ -44,6 +44,8 @@ def get_data():
     raw_dataset_path = fo.path_to_folder(2, "data" + sep + "7_cleaned_data") + "raw_data.csv"
     raw_dataset = pd.read_csv(raw_dataset_path)
 
+    vardata.df = vardata.df[vardata.df.vAr_nAmE.isin(list(raw_dataset.columns))]
+
     return vardata, raw_dataset
 
 ###
@@ -71,69 +73,86 @@ if menu == "Home":
 if menu == "EDA":
     #da.eda()
 
-    # Filters
-    st.sidebar.write("Filter by:")
-
-    filter1 = st.sidebar.checkbox("Demographics")
-    filter2 = st.sidebar.checkbox("Dietary")
-    filter3 = st.sidebar.checkbox("Examination")
-    filter4 = st.sidebar.checkbox("Laboratory")
-    filter5 = st.sidebar.checkbox("Questionnaire")
-
-    sort_by = st.sidebar.radio("Sort by:", options = ["Variable nomenclature", "Variable description", "Component"])
+    ### Filters
+    # Table filters
+    st.sidebar.subheader("Table tools")
+    sort_by = st.sidebar.radio("Sort by:", options = ["Variable nomenclature", "Variable description"])
     translation = {
         "Variable nomenclature" : "vAr_nAmE",
         "Variable description" : "var_descr",
-        "Component" : "component"
     }
 
+    filter_by = st.sidebar.radio("Filter by:", options = ["Demographics", "Dietary", "Examination", "Laboratory", "Questionnaire"])
+    
     to_show = variables_df.sort_values(by = translation[sort_by])
+    to_show = to_show[to_show.component == filter_by]
 
-    if filter1: to_show = to_show[to_show.component == "Demographics"]
-    if filter2: to_show = to_show[to_show.component == "Dietary"]
-    if filter3: to_show = to_show[to_show.component == "Examination"]
-    if filter4: to_show = to_show[to_show.component == "Laboratory"]
-    if filter5: to_show = to_show[to_show.component == "Questionnaire"]
+    # Plot filters
+    st.sidebar.subheader("Plotting tools")
+    y = st.sidebar.text_input("Choose your target variable (y):")
+    X = st.sidebar.text_area("Choose your explanatory variables (X):")
+    X = X.split("\n")
 
-    table_header = list(to_show.columns)
+    button = st.sidebar.button("Submit selection")
+    
+    ### Plots
+    # Table
+    table_header = ["Variable name", "Variable description"]
     table_data = [to_show.iloc[:, 0].values,
-                to_show.iloc[:, 1].values,
-                to_show.iloc[:, 2].values,
+                to_show.iloc[:, 1].values
                 ]
 
-    fig = go.Figure(data = go.Table(
-                    columnwidth = [40, 100, 40],
+    table = go.Figure(data = go.Table(
+                    columnwidth = [40, 100],
                     header = dict(values = table_header,
                     fill_color = "#3D5475",
-                    align = "left"),
+                    align = "left",
+                    font = dict(size = 20)),
+
                     cells = dict(values = table_data,
                     fill_color = "#7FAEF5",
-                    align = "left")
+                    align = "left",
+                    font = dict(size = 16),
+                    height = 30)
                     ))
-    fig.update_layout(margin = dict(l = 0, r = 0, b = 0, t = 0))
+    table.update_layout(margin = dict(l = 0, r = 0, b = 0, t = 0))
 
-    st.write(fig)
+    st.write(table)
 
-    ### Data
-    #st.table(raw_dataset.df.head(10))
+    # Distribution plots
+    if button:
+        # Data preprocessing
+        columns = [y] + X
+        data = raw_dataset.loc[:, columns].dropna()
 
-    #st.table(to_show)
+        corr = np.array(data.corr())
 
-    # Interface structure
-    #expander = st.beta_expander("Filter the variables")
+        y_descr = vardata.var_descr_detector(y)
+        X_descr = vardata.vars_descr_detector(X)
+        descrs = [y] + X_descr
 
-    # User filters
-    # filters = []
-    # for variable in vars_nom_descr[:20]:
-    #     filter_ = expander.checkbox(label = variable)
-    #     filters.append(filter_)
+        # Title and correlation
+        st.subheader(y_descr)
+
+        colorscale = [[0, "white"], [1, "cornflowerblue"]]
+        correlation_plot = ff.create_annotated_heatmap(corr,
+                                                       x = descrs,
+                                                       y = descrs,
+                                                       colorscale = colorscale)
+        st.write(correlation_plot)
+
+        for x in X:
+            x_descr = vardata.var_descr_detector(x, cut = 30, nom_included = True)
+            expander = st.beta_expander(x_descr)
+
+            with expander:
+                to_plot = data.loc[:, [y, x]].dropna()
+                histogram = px.histogram(to_plot, x = x, color = y,
+                                        marginal = "box",
+                                        labels = {x : x_descr},
+                                        width = 600)
+                st.write(histogram)
     
-
-
-    
-
-
-    ### Pot
     
 
 #########
