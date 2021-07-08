@@ -3,7 +3,15 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 
-#import plotly.plotly as py
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
+
+from sklearn.model_selection import train_test_split, RepeatedStratifiedKFold
+from sklearn import metrics
+from sklearn.preprocessing import StandardScaler
+
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -41,16 +49,31 @@ def get_data():
     vardata.load_data(2, vardata_downpath)
 
     #### Unprocessed Dataset
-    raw_dataset_path = fo.path_to_folder(2, "data" + sep + "7_cleaned_data") + "raw_data.csv"
-    raw_dataset = pd.read_csv(raw_dataset_path)
+    # raw_dataset_path = fo.path_to_folder(2, "data" + sep + "7_cleaned_data") + "raw_data.csv"
+    # raw_dataset = pd.read_csv(raw_dataset_path)
 
-    vardata.df = vardata.df[vardata.df.vAr_nAmE.isin(list(raw_dataset.columns))]
+    dataset = md.dataset()
+    folders = ["1_demographics", "2_dietary", "3_examination", "4_laboratory", "5_questionnaire"]
+    dataset.load_data(2, folders)
+    columns_correction = {
+            "WTDRD1_x" : "WTDRD1",
+            "WTDR2D_x" : "WTDR2D",
+            "DRABF_x" : "DRABF",
+            "DRDINT_x" : "DRDINT",
+            "WTSAF2YR_x" : "WTSAF2YR",
+            "LBXHCT_x" : "LBXHCT"
+        }
+    dataset.clean_columns(columns_correction)
+    dataset.heart_disease()
 
-    return vardata, raw_dataset
+
+    vardata.df = vardata.df[vardata.df.vAr_nAmE.isin(list(dataset.df.drop("heart_disease", axis = 1).columns))]
+
+    return vardata, dataset
 
 ###
-vardata, raw_dataset = get_data()
-vars_nom = list(raw_dataset.columns)
+vardata, dataset = get_data()
+vars_nom = list(dataset.df.columns)
 vars_descr = vardata.vars_descr_detector(vars_nom)
 vars_nom_descr = vardata.vars_descr_detector(vars_nom, nom_included = True)
 
@@ -119,11 +142,11 @@ if menu == "EDA":
 
     st.write(table)
 
-    # Distribution plots
+    # Plots
     if button:
         # Data preprocessing
         columns = [y] + X
-        data = raw_dataset.loc[:, columns].dropna()
+        data = dataset.df.loc[:, columns].dropna()
 
         corr = np.array(data.corr())
 
@@ -131,9 +154,10 @@ if menu == "EDA":
         X_descr = vardata.vars_descr_detector(X)
         descrs = [y] + X_descr
 
-        # Title and correlation
+        # Title
         st.subheader(y_descr)
 
+        # Correlation plot
         colorscale = [[0, "white"], [1, "cornflowerblue"]]
         correlation_plot = ff.create_annotated_heatmap(corr,
                                                        x = descrs,
@@ -146,19 +170,71 @@ if menu == "EDA":
             expander = st.beta_expander(x_descr)
 
             with expander:
+                # Distribution plots
                 to_plot = data.loc[:, [y, x]].dropna()
                 histogram = px.histogram(to_plot, x = x, color = y,
                                         marginal = "box",
                                         labels = {x : x_descr},
                                         width = 600)
                 st.write(histogram)
-    
-    
 
 #########
 if menu == "Predictor":
     #da.predictor()
-    pass
+    st.title("Train your own Machine Learning algorithm")
+    st.header("Try to make the best predictions possible by adjusting the model parameters")
+
+    ### User filters
+    # Data
+    st.sidebar.subheader("Data for the model")
+    y = st.sidebar.text_input("Choose your target variable (y):")
+    X = st.sidebar.text_area("Choose your explanatory variables (X):")
+    X = X.split("\n")
+
+    button = st.sidebar.button("Submit selection")
+
+    # Data processing
+    st.sidebar.subheader("Data processing for machine learning")
+    scaler = st.sidebar.radio(label = "Do you want to scale the data?",
+                              options = [False, True])
+    balance = st.sidebar.slider(label = "Do you want to oversample the minority class?",
+                                min_value = 0.0, max_value = 1.0, step = .2)
+
+    # Model settings
+    st.sidebar.subheader("Machine Learning settings")
+    seed = 42
+    chosen_model = st.sidebar.selectbox(label = "Choose the model",
+                         options = ["Logistic Regression", "Random Forest Classifier", "SVM"])
+    
+    if chosen_model == "Logistic Regression":
+        max_iter = st.sidebar.slider(label = "Max iterations", min_value = 100, max_value= 400, step = 100)
+        model = LogisticRegression(n_jobs = -1, random_state = seed,
+                                   max_iter = max_iter)
+    
+    if chosen_model == "Random Forest Classifier":
+        n_estimators = st.sidebar.slider(label = "Number of estimators", min_value = 100, max_value= 250, step = 50)
+        max_depth = st.sidebar.slider(label = "Max depth", min_value = 10, max_value= 30, step = 5)
+        max_features = st.sidebar.radio("Max features", options = ["auto", "sqrt", "log2"])
+        model = RandomForestClassifier(n_jobs = -1, random_state = seed,
+                                       n_estimators = n_estimators,
+                                       max_depth = max_depth,
+                                       max_features = max_features)
+
+    if chosen_model == "SVM":
+        max_iter = st.sidebar.slider(label = "Max iterations", min_value = 100, max_value= 200, step = 20)
+        model = LinearSVC(random_state = seed,
+                          max_iter = max_iter)
+
+
+    ### Output
+    # Data stats
+    if button:
+        features = [y] + X
+        data = dataset.filter_columns(features)
+
+        st.table(data.head())
+        st.write(data.describe())
+
 
 #########
 if menu == "Saved ML Models":

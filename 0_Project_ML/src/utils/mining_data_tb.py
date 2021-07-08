@@ -232,8 +232,11 @@ class dataset:
         self.df.loc[(pos_cond_b) | (pos_cond_c) | (pos_cond_d) | (pos_cond_e) | (pos_cond_f), "heart_disease"] = 1
 
     #########
-    def filter_columns(self, features):
-        self.df = self.df.loc[:, features]
+    def filter_columns(self, features, inplace = False):
+        if inplace:
+            self.df = self.df.loc[:, features]
+        else:
+            return self.df.loc[:, features]
 
     #########
     def model_data(self, split, cv, epochs = 1, scaler = False, balance = None, seed = 42): 
