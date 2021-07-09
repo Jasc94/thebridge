@@ -84,7 +84,7 @@ variables_df = vardata.df.iloc[:, [0, 1, -2]]
 
 ##################################################### INTERFACE #####################################################
 menu = st.sidebar.selectbox("Menu:",
-                            options = ["Home", "EDA", "Predictor", "Saved ML Models", "API", "Methodology"])
+                            options = ["Home", "EDA", "Model testing", "Saved ML Models", "API", "Methodology"])
 
 #########
 if menu == "Home":
@@ -234,7 +234,7 @@ if menu == "EDA":
                 st.write(histogram)
 
 #########
-if menu == "Predictor":
+if menu == "Model testing":
     #da.predictor()
     
     # st.header("Train your own Machine Learning algorithm")
@@ -311,15 +311,13 @@ if menu == "Predictor":
         expander = st.beta_expander("More info on the model and training")
         with expander:
             st.write("**Train structures**")
-            st.write(my_model.train_set_structures)
+            st.table(my_model.train_set_structures)
             st.write("**Validation structures**")
-            st.write(my_model.val_set_structures)
-            try:
+            st.table(my_model.val_set_structures)
+            if chosen_model == "Random Forest Classifier":
+                importances = my_model.feature_importances
                 st.write("**Feature importances**:")
-                st.table(my_model.feature_importances)
-            except:
-                pass
-
+                st.table(importances)
 
         fig = go.Figure()
         x_axis = list(range(len(my_model.train_scores)))
@@ -329,7 +327,61 @@ if menu == "Predictor":
         st.write(fig)
 
     if test_button:
+        # Data processing according to chosen settings
+        ml_dataset.filter_columns(features, inplace = True)
+        ml_dataset.df = ml_dataset.df.dropna()
+        ml_dataset.model_data(split, cv, scaler = scaler, balance = balance)
+
+        # Model training
+        my_model = md.ml_model(model)
+        my_model.load_data(ml_dataset.X_train, ml_dataset.X_test, ml_dataset.y_train, ml_dataset.y_test, features, ml_dataset.kfold)
+        my_model.ml_trainer()
+        my_model.ml_tester()
+
+        #st.write(my_model.cm)
+        st.subheader("Confusion matrix")
+        confusion_matrix = [my_model.cm[1], my_model.cm[0]]
+        colorscale = [[0, "white"], [1, "cornflowerblue"]]
+        correlation_plot = ff.create_annotated_heatmap(confusion_matrix,
+                                                       x = ["Negative", "Positive"],
+                                                       y = ["Positive", "Negative"],
+                                                       colorscale = colorscale)
+        st.write(correlation_plot)
+
+        expander = st.beta_expander("More info on the model and training")
+        with expander:
+            st.write("**Structures**:")
+            st.table(pd.Series(my_model.train_structure, name = "Train structure"))
+            #st.write("**Test structure**")
+            st.table(pd.Series(my_model.test_structure, name = "Test structure"))
+
+            st.write("**Scores**")
+            st.write(f"Train score: {my_model.train_score}")
+            st.write(f"Test score: {my_model.test_score}")
+
+            st.write("**Metrics**")
+            st.write(f"Accuracy: {my_model.accuracy}")
+            st.write(f"Precision: {my_model.precision}")
+            st.write(f"Recall: {my_model.recall}")
+            st.write(f"F1-Score: {my_model.f1_score}")
+
+            if chosen_model == "Random Forest Classifier":
+                importances = my_model.feature_importances
+                st.write("**Feature importances**:")
+                st.table(importances)
+
         
+
+        # fig = go.Figure()
+        # x_axis = list(range(len(my_model.prediction)))
+        # fig.add_trace(go.Scatter(x = x_axis, y = my_model.prediction,
+        #                          name = "Predictions", line = dict(color = "royalblue")))
+        # fig.add_trace(go.Scatter(x = x_axis, y = my_model.y_test,
+        #                          name = "Actual data", line = dict(color = "royalblue",
+        #                          dash = "dash")))
+
+        # st.write(fig)
+
     ### Output
 
     
@@ -343,6 +395,7 @@ if menu == "API":
     #da.api()
     data_checkbox = st.sidebar.checkbox(label = "Data")
     variables_checkbox = st.sidebar.checkbox(label = "Variables")
+    sql_checkbox = st.sidebar.checkbox(label = "Save data in SQL")
 
     password = st.sidebar.text_input("Password to access data")
     button = st.sidebar.button("Get data")
@@ -365,7 +418,15 @@ if menu == "API":
             except:
                 st.header("It wasn't possible to gather the data")
                 st.write("Please check the password or confirm that the server is running")
-    
+        if sql_checkbox:
+            try:
+                url = f"http://localhost:6060/sql-database?password={password}"
+                requests.get(url)
+                st.write("Data succesfully saved into the SQL database")
+            except:
+                st.header("It wasn't possible to gather the data")
+                st.write("Please check the password or confirm that the server is running")
+
 #########
 if menu == "Methodology":
     #da.methodology()

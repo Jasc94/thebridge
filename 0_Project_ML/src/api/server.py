@@ -19,7 +19,7 @@ import utils.folder_tb as fo
 import utils.apis_tb as ap
 
 
-server_password = "45395203B"
+server_password = "jonathan"
 
 ##################################################### FLASK FUNCTIONS #####################################################
 ##### RUN THE SERVER

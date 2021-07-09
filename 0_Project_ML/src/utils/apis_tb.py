@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, Response
 from imblearn.over_sampling import SMOTE
+from sqlalchemy import create_engine
 
 import pandas as pd
 
@@ -17,6 +18,7 @@ sys.path.append(current_folder)
 
 import folder_tb as fo
 import mining_data_tb as md
+import sql_tb as sq
 
 #  Flask object
 app = Flask(__name__)
@@ -24,6 +26,7 @@ app = Flask(__name__)
 # API password
 data_password = "12345"
 variables_password = "123456"
+sql_password = "1234567"
 
 ##################################################### FLASK FUNCTIONS #####################################################
 #####
@@ -52,6 +55,50 @@ def variables_data():
         df = pd.read_csv(data_path)
         return df.to_json()
 
+    else:
+        return "Wrong password"
+
+@app.route("/sql-database", methods = ["GET"])
+def sql_database():
+    x = request.args["password"]
+
+    if x == sql_password:
+        # Data
+        data_path = fo.path_to_folder(2, "data" + sep + "7_cleaned_data") + "cleaned_data.csv"
+        data = pd.read_csv(data_path)
+
+        # Server settings
+        settings_path = fo.path_to_folder(1, "sql") + "sql_server_settings.json"
+        read_json = md.read_json_to_dict(settings_path)
+
+        IP_DNS = read_json["IP_DNS"]
+        USER = read_json["USER"]
+        PASSWORD = read_json["PASSWORD"]
+        DB_NAME = read_json["DB_NAME"]
+        PORT = read_json["PORT"]
+
+        # Server connection
+        sql_db = sq.MySQL(IP_DNS, USER, PASSWORD, DB_NAME, PORT)
+        sql_db.connect()
+
+        db_connection_str = sql_db.SQL_ALCHEMY
+        db_connection = create_engine(db_connection_str)
+
+        count = 1
+        table_created = False
+
+        while table_created == False:
+            try:
+                save_name = "api_table_" + str(count)
+                data.to_sql(save_name, con = db_connection, index = False)
+                table_created = True
+            except:
+                count += 1
+        
+        sql_db.close()
+        
+        return "Table succesfully created"
+    
     else:
         return "Wrong password"
 
