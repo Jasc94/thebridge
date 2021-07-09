@@ -193,11 +193,23 @@ class dataset:
             self.df = pd.merge(self.df, df, how = "outer", on = "SEQN")
             self.raw_df = pd.merge(self.df, df, how = "outer", on = "SEQN")
 
+    def __clean_rows(self):
+        important_values = [7.0, 9.0]
+        # Asthma
+        self.df = self.df[~self.df.MCQ010.isin(important_values)]
+        # Heart problems
+        self.df = self.df[~self.df.MCQ160B.isin(important_values)]
+        self.df = self.df[~self.df.MCQ160C.isin(important_values)]
+        self.df = self.df[~self.df.MCQ160D.isin(important_values)]
+        self.df = self.df[~self.df.MCQ160E.isin(important_values)]
+        self.df = self.df[~self.df.MCQ160F.isin(important_values)]
+
     #########
-    def load_data(self, up_levels, folders):
+    def load_data(self, up_levels, folders, clean = False):
         self.__read_all_data(up_levels, folders)
         self.__concatenate_all_dfs()
         self.__merge_dfs()
+        self.__clean_rows()
 
     #########
     def clean_columns(self, correction_map):
@@ -219,7 +231,7 @@ class dataset:
         self.df = self.df[(cond_b) & (cond_c) & (cond_d) & (cond_e) & (cond_f)]
 
         # New column to group all heart diseases
-        self.df["heart_disease"] = 0
+        self.df["MCQ160H"] = 0
 
         # Conditions to filter by any heart disease
         pos_cond_b = self.df.MCQ160B == 1
@@ -229,7 +241,7 @@ class dataset:
         pos_cond_f = self.df.MCQ160F == 1
 
         # Given the previous conditions, place a "1" in the column if they are matched
-        self.df.loc[(pos_cond_b) | (pos_cond_c) | (pos_cond_d) | (pos_cond_e) | (pos_cond_f), "heart_disease"] = 1
+        self.df.loc[(pos_cond_b) | (pos_cond_c) | (pos_cond_d) | (pos_cond_e) | (pos_cond_f), "MCQ160H"] = 1
 
     #########
     def filter_columns(self, features, inplace = False):
@@ -436,3 +448,10 @@ def read_json_to_dict(json_fullpath):
         return read_json
     except Exception as error:
         raise ValueError(error)
+
+#########
+def round_number(x, dec):
+    try:
+        return round(x, dec)
+    except:
+        return x
