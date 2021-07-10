@@ -248,6 +248,18 @@ class dataset:
             return self.df.loc[:, features]
 
     #########
+    def __pair_mean(self, pair_list, new_name, drop_old = False):
+        self.df[new_name] = self.df.loc[:, pair_list].mean(axis = 1)
+        
+        if drop_old:
+            self.df = self.df.drop(pair_list, axis = 1)
+
+    def pairs_mean(self, combination_list, drop_old = False):
+        for combination in combination_list:
+            self.__pair_mean(combination[0], combination[1], drop_old = drop_old)
+
+
+    #########
     def reset_dataset(self):
         self.df = self.__raw_df
 
@@ -308,5 +320,12 @@ def read_json_to_dict(json_fullpath):
 def round_number(x, dec):
     try:
         return round(x, dec)
+    except:
+        return x
+
+#########
+def to_float(x):
+    try:
+        return float(x)
     except:
         return x

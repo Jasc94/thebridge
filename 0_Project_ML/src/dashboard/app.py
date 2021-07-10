@@ -3,6 +3,7 @@ import streamlit as st
 import copy
 import numpy as np
 import pandas as pd
+import joblib
 
 from sqlalchemy import create_engine
 
@@ -106,6 +107,13 @@ def get_data(allow_output_mutation=True):
     return vardata, dataset
 
 #########
+@st.cache
+def get_models():
+    best_ml_model_path = fo.path_to_folder(2, "models") + "best_ml_model.pkl"
+    best_ml_model = joblib.load(best_ml_model_path)
+    return best_ml_model
+
+#########
 model_comparison_1, model_comparison_2 = get_sql_data()
 
 #########
@@ -116,6 +124,9 @@ vars_descr = vardata.vars_descr_detector(vars_nom)
 vars_nom_descr = vardata.vars_descr_detector(vars_nom, nom_included = True)
 
 variables_df = vardata.df.iloc[:, [0, 1, -2]]
+
+#########
+best_ml_model = get_models()
 
 
 ##################################################### INTERFACE #####################################################
@@ -417,7 +428,44 @@ if menu == "Saved ML Models":
 
 #########
 if menu == "Predictor":
-    pass 
+    expander = st.beta_expander("Find out if you are at risk of heart disease")
+
+    with expander:
+        cols = st.beta_columns(3)
+        # Col 1
+        RIAGENDR = cols[0].text_input("Gender", value = "Female")
+        RIDAGEYR = cols[0].text_input("Age", value = 43)
+        BPXDI1 = cols[0].text_input("Diastolic: Blood pressure (mm Hg)", value = 68)
+        BPXSY1 = cols[0].text_input("Systolic: Blood pressure (mm Hg)", value = 121) 
+        BMXWT = cols[0].text_input("Weight (kg)", value = 79)
+
+        # Col 2
+        BMXWAIST = cols[1].text_input("Waist Circumference (cm)", value = 97)
+        LBXTC = cols[1].text_input("Total Cholesterol (mg/dL) *", value = 183)
+        LBXSGL = cols[1].text_input("Glucose (mg/dL) *", value = 100)
+        MEANCHOL = cols[1].text_input("Cholesterol (gmg **", value = 290)
+        MEANTFAT = cols[1].text_input("Total Fat (g) **", value = 78)
+
+        # Col 3
+        MEANSFAT = cols[2].text_input("Total Saturated Fatty Acis (g) **", value = 25)
+        MEANSUGR = cols[2].text_input("Total Sugar (g) **", value = 103)
+        MEANFIBE = cols[2].text_input("Total Fiber (g) **", value = 16)
+        MEANTVB6 = cols[2].text_input("Total Vitamin B6 (mg) **", value = 2)
+
+        to_predict = [RIAGENDR, RIDAGEYR, BPXDI1, BPXSY1, BMXWT, BMXWAIST, LBXTC,
+                      LBXSGL, MEANCHOL, MEANTFAT, MEANSFAT, MEANSUGR, MEANFIBE,
+                      MEANTVB6]
+
+        st.write("\* Blood levels", value = 68)
+        st.write("** Usual intake (diet habits)", value = 68)
+
+    predict_button = st.button("Predict your likelihood of having cardiovascular diseases")
+
+    if predict_button:
+        to_predict = [float(val) for val in to_predict]
+        to_predict = np.array(to_predict).reshape(-1, 1)
+        st.write(best_ml_model.predict(to_predict))
+        
 
 #########
 if menu == "API":
