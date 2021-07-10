@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup as bs
 import html
 import lxml
 import json
+import joblib
 
 import numpy as np
 import pandas as pd
@@ -108,7 +109,7 @@ class dataset:
         # Raw data
         self.__dfs_list = []
         self.__joined_dfs = {}
-        self.raw_df = None
+        self.__raw_df = None
         self.df = None
 
         # Processed data for ML
@@ -118,8 +119,7 @@ class dataset:
         self.y_test = None
         self.kfold = None
 
-
-
+    ######### DATA PROCESSING #########
     #########
     def __read_data(self, up_levels, folder):
         path = dirname(abspath(__file__))
@@ -174,15 +174,10 @@ class dataset:
 
     #########
     def __concatenate_all_dfs(self):
-        #end_dfs = []
-        #end_dfs = {}
-        
         for data_dfs in self.__dfs_list:
             files = self.__concatenate_dfs(data_dfs)
             self.__joined_dfs = {**self.__joined_dfs, **files}
-            #end_dfs.append(files)
 
-        #return self.__joined_dfs
 
     #########
     def __merge_dfs(self):
@@ -191,8 +186,8 @@ class dataset:
 
         for name, df in self.__joined_dfs.items():
             self.df = pd.merge(self.df, df, how = "outer", on = "SEQN")
-            self.raw_df = pd.merge(self.df, df, how = "outer", on = "SEQN")
-
+            
+    #########
     def __clean_rows(self):
         important_values = [7.0, 9.0]
         # Asthma
@@ -204,31 +199,31 @@ class dataset:
         self.df = self.df[~self.df.MCQ160E.isin(important_values)]
         self.df = self.df[~self.df.MCQ160F.isin(important_values)]
 
-    #########
-    def load_data(self, up_levels, folders, clean = False):
-        self.__read_all_data(up_levels, folders)
-        self.__concatenate_all_dfs()
-        self.__merge_dfs()
-        self.__clean_rows()
+    def __update_target_values(self):
+        self.df.MCQ010 = self.df.MCQ010.replace(2, 0)
+        self.df.MCQ160B = self.df.MCQ160B.replace(2, 0)
+        self.df.MCQ160C = self.df.MCQ160C.replace(2, 0)
+        self.df.MCQ160D = self.df.MCQ160D.replace(2, 0)
+        self.df.MCQ160E = self.df.MCQ160E.replace(2, 0)
+        self.df.MCQ160F = self.df.MCQ160F.replace(2, 0)
 
     #########
-    def clean_columns(self, correction_map):
+    def __clean_columns(self, correction_map):
         to_drop = [key[:-2] + "_y" for key in correction_map.keys()]
         self.df = self.df.drop(to_drop, axis = 1)
-        
         self.df = self.df.rename(columns = correction_map)
-    
+
     #########
-    def heart_disease(self):
+    def __heart_disease(self):
         # Conditions to remove values of no interest from the columns of interest
-        cond_b = self.df.MCQ160B != 9
-        cond_c = self.df.MCQ160C != 7
-        cond_d = (self.df.MCQ160D != 9) & (self.df.MCQ160D != 7)
-        cond_e = self.df.MCQ160E != 9
-        cond_f = self.df.MCQ160F != 9
+        # cond_b = self.df.MCQ160B != 9
+        # cond_c = self.df.MCQ160C != 7
+        # cond_d = (self.df.MCQ160D != 9) & (self.df.MCQ160D != 7)
+        # cond_e = self.df.MCQ160E != 9
+        # cond_f = self.df.MCQ160F != 9
 
         # Filter the data with the previous conditions
-        self.df = self.df[(cond_b) & (cond_c) & (cond_d) & (cond_e) & (cond_f)]
+        # self.df = self.df[(cond_b) & (cond_c) & (cond_d) & (cond_e) & (cond_f)]
 
         # New column to group all heart diseases
         self.df["MCQ160H"] = 0
@@ -244,6 +239,19 @@ class dataset:
         self.df.loc[(pos_cond_b) | (pos_cond_c) | (pos_cond_d) | (pos_cond_e) | (pos_cond_f), "MCQ160H"] = 1
 
     #########
+    def load_data(self, up_levels, folders, correction_map):
+        self.__read_all_data(up_levels, folders)
+        self.__concatenate_all_dfs()
+        self.__merge_dfs()
+        self.__clean_rows()
+        self.__update_target_values()
+        self.__clean_columns(correction_map)
+        self.__heart_disease()
+        # Dataset backup
+        self.__raw_df = self.df
+    
+    ######### SUPPORT FUNCTIONS #########
+    #########
     def filter_columns(self, features, inplace = False):
         if inplace:
             self.df = self.df.loc[:, features]
@@ -251,30 +259,34 @@ class dataset:
             return self.df.loc[:, features]
 
     #########
+    def reset_dataset(self):
+        self.df = self.__raw_df
+
+    #########
     def model_data(self, split, cv, epochs = 1, scaler = False, balance = None, seed = 42): 
-        ### Independent variables
+        # Independent variables
         X = np.array(self.df.iloc[:, 1:])
 
-        ### Dependent variable
+        # Dependent variable
         y = np.array(self.df.iloc[:, 0])
 
-        ### Data scaling
+        # Data scaling
         if scaler:
             scaler = StandardScaler()
             X = scaler.fit_transform(X)
 
-        ### Train-test
+        # Train-test
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size = split, random_state = seed)
 
-        ### Balancing data
+        # Balancing data
         if balance != None:
             sm = SMOTE(sampling_strategy = balance, random_state = seed, n_jobs = -1)
             self.X_train, self.y_train = sm.fit_resample(self.X_train, self.y_train)
 
-        ### Cross validation
+        # Cross validation
         self.kfold = RepeatedStratifiedKFold(n_splits = cv, n_repeats = epochs, random_state = seed)
 
-################# DATA PREP FOR ML #################
+################# ML TRAINING #################
 class ml_model:
     #########
     def __init__(self, model):
@@ -376,7 +388,7 @@ class ml_model:
         y_train_unique, y_train_counts = np.unique(self.y_train, return_counts=True)
         y_test_unique, y_test_counts = np.unique(self.y_test, return_counts=True)
 
-        self.train_structure =dict(zip(y_train_unique, y_train_counts / len(self.y_train) * 100))
+        self.train_structure = dict(zip(y_train_unique, y_train_counts / len(self.y_train) * 100))
         self.test_structure = dict(zip(y_test_unique, y_test_counts / len(self.y_test) * 100))
 
         # Scores
@@ -419,6 +431,81 @@ class ml_model:
         new_predictions = self.model.predict(to_predict)
         return new_predictions
 
+
+class model_ensembler:
+    def __init__(self, models):
+        # Models
+        self.models = models
+        self.model_names = [str(model) for model in models]
+        self.ml_models = [ml_model(model) for model in models]
+
+        # Data
+        self.X_train = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
+        self.features = None
+        self.kfold = None
+
+        # Metrics
+        self.metrics = None
+
+    #########
+    def load_data(self, X_train, X_test, y_train, y_test, features, kfold):
+        self.X_train = X_train
+        self.X_test = X_test
+        self.y_train = y_train
+        self.y_test = y_test
+        self.features = features
+        self.kfold = kfold
+
+    #########
+    def models_tester(self):
+        metric_names = ["Test_score", "Train_score", "Test_score_drop", "Accuracy", "Precision", "Recall", "F1_score", "Confusion_matrix"]
+        test_scores = []
+        train_scores = []
+        test_score_drops = []
+        cms = []
+        accuracies = []
+        precisions = []
+        recalls = []
+        f1_scores = []
+        metrics_lists = [test_scores, train_scores, test_score_drops, accuracies, precisions, recalls, f1_scores, cms]
+
+        for model in self.ml_models:
+            model.load_data(self.X_train, self.X_test, self.y_train, self.y_test, self.features, self.kfold)
+            model.ml_trainer()
+            model.ml_tester()
+            # Saving model metrics
+            test_scores.append(model.test_score)
+            train_scores.append(model.train_score)
+            test_score_drops.append((model.test_score - model.train_score) / model.train_score)
+            accuracies.append(model.accuracy)
+            precisions.append(model.precision)
+            recalls.append(model.recall)
+            f1_scores.append(model.f1_score)
+            cms.append(model.cm)
+
+        self.metrics = pd.DataFrame(metrics_lists, index = metric_names, columns = self.model_names).T
+        self.metrics = self.metrics.sort_values(by = "Test_score", ascending = False)
+        #return self.metrics.sort_values(by = "Test_score", ascending = False)
+
+    def models_saver(self, path_to_folder):
+        try:
+            # Create the folder if it doesn't exist
+            if not os.path.exists(path_to_folder):
+                os.makedirs(path_to_folder)
+            # Dump all the models in there
+            for ind, model in enumerate(self.models):
+                model_name = self.model_names[ind]
+                joblib.dump(model, path_to_folder + sep + model_name)
+
+            return "Succesfully saved"
+
+        except:
+            return "Something went wrong. Please check all the settings"
+
+        
 
 ##################################################### OTHERS #####################################################
 #########
