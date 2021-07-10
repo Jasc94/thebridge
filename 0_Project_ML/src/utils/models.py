@@ -107,7 +107,6 @@ class ml_model:
             feature_importances = list(zip(self.features, importances))
 
             self.feature_importances = pd.DataFrame(feature_importances, columns = ["features", "importance"]).sort_values(by = "importance", ascending = False)
-            #return train_scores, val_scores, feature_importances_df
         
         except:
             pass
@@ -162,6 +161,7 @@ class ml_model:
         new_predictions = self.model.predict(to_predict)
         return new_predictions
 
+    #########
     def model_saver(self, path):
         try:
             joblib.dump(self.model, path + ".pkl")

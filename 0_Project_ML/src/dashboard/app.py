@@ -4,6 +4,8 @@ import copy
 import numpy as np
 import pandas as pd
 
+from sqlalchemy import create_engine
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -38,9 +40,45 @@ sys.path.append(current_folder)
 import utils.mining_data_tb as md
 import utils.visualization_tb as vi
 import utils.folder_tb as fo
+import utils.models as mo
+import utils.sql_tb as sq
 
 
 ##################################################### PULLING THE DATA #####################################################
+#########
+@st.cache
+def get_sql_data():
+    # Server info
+    sql_settings_path = fo.path_to_folder(1, "sql") + "sql_server_settings.json"
+    read_json = md.read_json_to_dict(sql_settings_path)
+
+    IP_DNS = read_json["IP_DNS"]
+    USER = read_json["USER"]
+    PASSWORD = read_json["PASSWORD"]
+    DB_NAME = read_json["DB_NAME"]
+    PORT = read_json["PORT"]
+
+    # Connection to the database
+    sql_db = sq.MySQL(IP_DNS, USER, PASSWORD, DB_NAME, PORT)
+    sql_db.connect()
+
+    # Query
+    sql_query_1 = '''
+    SELECT * FROM model_comparison_noscale_nobalance
+    '''
+    results = sql_db.execute_get_sql(sql_query_1)
+    column_names = [tuple[0] for tuple in sql_db.cursor.description]
+    model_comparison_1 = pd.DataFrame(results, columns = column_names)
+
+    sql_query_2 = '''
+    SELECT * FROM model_comparison_scale_balance
+    '''
+    results = sql_db.execute_get_sql(sql_query_2)
+    column_names = [tuple[0] for tuple in sql_db.cursor.description]
+    model_comparison_2 = pd.DataFrame(results, columns = column_names)
+
+    return model_comparison_1, model_comparison_2
+
 #########
 @st.cache
 def get_data(allow_output_mutation=True):
@@ -49,14 +87,9 @@ def get_data(allow_output_mutation=True):
     vardata = md.variables_data()
     vardata.load_data(2, vardata_downpath)
 
-    #### Unprocessed Dataset
-    # raw_dataset_path = fo.path_to_folder(2, "data" + sep + "7_cleaned_data") + "raw_data.csv"
-    # raw_dataset = pd.read_csv(raw_dataset_path)
-
     #### Dataset
     dataset = md.dataset()
     folders = ["1_demographics", "2_dietary", "3_examination", "4_laboratory", "5_questionnaire"]
-    dataset.load_data(2, folders)
     columns_correction = {
             "WTDRD1_x" : "WTDRD1",
             "WTDR2D_x" : "WTDR2D",
@@ -65,15 +98,17 @@ def get_data(allow_output_mutation=True):
             "WTSAF2YR_x" : "WTSAF2YR",
             "LBXHCT_x" : "LBXHCT"
         }
-    dataset.clean_columns(columns_correction)
-    dataset.heart_disease()
+    dataset.load_data(2, folders, columns_correction)
 
     # Correction
     vardata.df = vardata.df[vardata.df.vAr_nAmE.isin(list(dataset.df.drop("MCQ160H", axis = 1).columns))]
 
     return vardata, dataset
 
-###
+#########
+model_comparison_1, model_comparison_2 = get_sql_data()
+
+#########
 vardata, dataset = get_data()
 ml_dataset = copy.deepcopy(dataset)        # Support object for "Predictor section"
 vars_nom = list(dataset.df.columns)
@@ -82,9 +117,10 @@ vars_nom_descr = vardata.vars_descr_detector(vars_nom, nom_included = True)
 
 variables_df = vardata.df.iloc[:, [0, 1, -2]]
 
+
 ##################################################### INTERFACE #####################################################
 menu = st.sidebar.selectbox("Menu:",
-                            options = ["Home", "EDA", "Model testing", "Saved ML Models", "API", "Methodology"])
+                            options = ["Home", "EDA", "Model testing", "Saved ML Models", "Predictor", "API", "Methodology"])
 
 #########
 if menu == "Home":
@@ -303,7 +339,7 @@ if menu == "Model testing":
         ml_dataset.model_data(split, cv, scaler = scaler, balance = balance)
 
         # Model training
-        my_model = md.ml_model(model)
+        my_model = mo.ml_model(model)
         my_model.load_data(ml_dataset.X_train, ml_dataset.X_test, ml_dataset.y_train, ml_dataset.y_test, features, ml_dataset.kfold)
         my_model.ml_trainer()
 
@@ -333,7 +369,7 @@ if menu == "Model testing":
         ml_dataset.model_data(split, cv, scaler = scaler, balance = balance)
 
         # Model training
-        my_model = md.ml_model(model)
+        my_model = mo.ml_model(model)
         my_model.load_data(ml_dataset.X_train, ml_dataset.X_test, ml_dataset.y_train, ml_dataset.y_test, features, ml_dataset.kfold)
         my_model.ml_trainer()
         my_model.ml_tester()
@@ -370,25 +406,18 @@ if menu == "Model testing":
                 st.write("**Feature importances**:")
                 st.table(importances)
 
-        
-
-        # fig = go.Figure()
-        # x_axis = list(range(len(my_model.prediction)))
-        # fig.add_trace(go.Scatter(x = x_axis, y = my_model.prediction,
-        #                          name = "Predictions", line = dict(color = "royalblue")))
-        # fig.add_trace(go.Scatter(x = x_axis, y = my_model.y_test,
-        #                          name = "Actual data", line = dict(color = "royalblue",
-        #                          dash = "dash")))
-
-        # st.write(fig)
-
-    ### Output
-
     
 #########
 if menu == "Saved ML Models":
     #da.saved_ml_models()
-    pass
+    st.write("Models with unscaled and unbalanced data")
+    st.table(model_comparison_1)
+    st.write("Models with scaled and balanced data")
+    st.table(model_comparison_2)
+
+#########
+if menu == "Predictor":
+    pass 
 
 #########
 if menu == "API":

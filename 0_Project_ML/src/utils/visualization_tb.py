@@ -96,3 +96,62 @@ def multi_axes_plotter(df, n_columns, kind, figsize, features_names = None):
                 break
 
     return fig
+
+##################################################### ML METRICS PLOTTERS #####################################################
+#####
+
+class ml_model_plotter():
+    def __init__(self, ml_model):
+        self.ml_model = ml_model
+
+    #####
+    def train_val_plot(self, figsize = (14, 6)):
+        fig = plt.figure(figsize = figsize)
+        sns.set_theme()
+
+        sns.lineplot(data = [self.ml_model.train_scores, self.ml_model.val_scores], markers = True, dashes = False)
+
+        plt.ylabel("Score")
+        plt.xlabel("Round")
+        plt.legend(["Train score", "Validation score"])
+        
+        return fig
+
+    #####
+    def test_metrics(self, figsize = (12, 12)):
+        # Calculate the row/column totals for later use
+        row_sums = self.ml_model.cm.sum(axis = 1, keepdims = True)
+        column_sums = self.ml_model.cm.sum(axis = 0, keepdims = True)
+        
+        # Relative values to column/row sums
+        rel_row = (self.ml_model.cm / row_sums) * 100
+        rel_col = (self.ml_model.cm / column_sums) * 100
+
+        # Plot
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize = figsize, sharex = True, sharey = True)
+
+        first_row_palette = sns.color_palette("light:b", as_cmap=True)
+        second_row_palette = sns.light_palette("seagreen", as_cmap=True)
+        fmt = "g"
+
+        # ax1
+        sns.heatmap(self.ml_model.cm, annot = True, linewidths = .1, cmap = first_row_palette, ax = ax1, cbar = False, fmt = fmt)
+        ax1.set_ylabel("Actual class")
+        ax1.set_title("Confusion matrix")
+
+        # ax2
+        sns.heatmap((self.ml_model.cm / self.ml_model.cm.sum()) * 100, annot = True, linewidths = .1, cmap = first_row_palette, ax = ax2, cbar = False, fmt = fmt)
+        ax2.set_ylabel("Actual class")
+        ax2.set_title("Confusion matrix - relative")
+
+        # ax3
+        sns.heatmap(rel_row, annot = True, linewidths = .1, cmap = second_row_palette, ax = ax3, cbar = False, fmt = fmt)
+        ax3.set_xlabel("Predicted class")
+        ax3.set_title("Relative to row sum (Recall)")
+
+        # ax4
+        sns.heatmap(rel_col, annot = True, linewidths = .1, cmap = second_row_palette, ax = ax4, cbar = False, fmt = fmt)
+        ax4.set_xlabel("Predicted class")
+        ax4.set_title("Relative to col sum (Precision)")
+
+        return fig
