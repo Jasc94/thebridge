@@ -248,16 +248,32 @@ class dataset:
             return self.df.loc[:, features]
 
     #########
+    def drop_columns(self, columns):
+        self.df = self.df.drop(columns, axis = 1)
+
+    #########
+    def drop_nans(self):
+        self.df = self.df.dropna()
+
+    #########
+    def dummies_transform(self, variable, mapper):
+        # Mapping values
+        self.df.loc[:, variable] = self.df.loc[:, variable].map(mapper)
+        # Getting dummies
+        self.df = pd.get_dummies(self.df, prefix = "", prefix_sep = "", columns = [variable])
+        #return df
+
+    #########
     def __pair_mean(self, pair_list, new_name, drop_old = False):
         self.df[new_name] = self.df.loc[:, pair_list].mean(axis = 1)
         
         if drop_old:
             self.df = self.df.drop(pair_list, axis = 1)
 
+    #########
     def pairs_mean(self, combination_list, drop_old = False):
         for combination in combination_list:
             self.__pair_mean(combination[0], combination[1], drop_old = drop_old)
-
 
     #########
     def reset_dataset(self):

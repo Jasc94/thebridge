@@ -434,6 +434,8 @@ if menu == "Predictor":
         cols = st.beta_columns(3)
         # Col 1
         RIAGENDR = cols[0].text_input("Gender", value = "Female")
+        if RIAGENDR == "Female": RIAGENDR = 2
+        else: RIAGENDR = 1
         RIDAGEYR = cols[0].text_input("Age", value = 43)
         BPXDI1 = cols[0].text_input("Diastolic: Blood pressure (mm Hg)", value = 68)
         BPXSY1 = cols[0].text_input("Systolic: Blood pressure (mm Hg)", value = 121) 
@@ -459,12 +461,18 @@ if menu == "Predictor":
         st.write("\* Blood levels", value = 68)
         st.write("** Usual intake (diet habits)", value = 68)
 
-    predict_button = st.button("Predict your likelihood of having cardiovascular diseases")
+    st.sidebar.write("Predict whether or not you can have a cardiovascular disease")
+    predict_button = st.sidebar.button("Predict health")
 
     if predict_button:
-        to_predict = [float(val) for val in to_predict]
-        to_predict = np.array(to_predict).reshape(-1, 1)
-        st.write(best_ml_model.predict(to_predict))
+        to_predict = [md.to_float(val) for val in to_predict]
+        to_predict = np.array(to_predict).reshape(1, -1)
+
+        prediction = best_ml_model.predict(to_predict)
+        if prediction == 1:
+            st.write("You are at risk of having a cardiovascular disease")
+        else:
+            st.write("You are not at risk of having a cardiovascular disease")
         
 
 #########

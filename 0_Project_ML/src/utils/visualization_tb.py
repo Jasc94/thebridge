@@ -19,83 +19,97 @@ import mining_data_tb as md
 
 ##################################################### PLOTTERS #####################################################
 #####
-def n_rows(df, n_columns):
-    columns = list(df.columns)
+class eda_plotter():
+    def __init__(self, df, features_names):
+        self.df = df
+        self.features_names = features_names
 
-    if len(columns) % n_columns == 0:
-        axes_rows = len(columns) // n_columns
-    else:
-        axes_rows = (len(columns) // n_columns) + 1
+    #####
+    def __n_rows(self, n_columns):
+        columns = list(self.df.columns)
 
-    return axes_rows
-
-#####
-def rows_plotter(df, n_columns, kind, figsize, features_names = None):
-    fig, axes = plt.subplots(1, n_columns, figsize = figsize)
-    count = 0
-
-    for column in range(n_columns):
-        if kind == "strip":
-            sns.stripplot(y = df.iloc[:, count], ax = axes[column])
-        elif kind == "dist":
-            sns.distplot(df.iloc[:, count], ax = axes[column])
-        elif kind == "box":
-            sns.boxplot(df.iloc[:, count], ax = axes[column])
+        if len(columns) % n_columns == 0:
+            axes_rows = len(columns) // n_columns
         else:
-            sns.histplot(df.iloc[:, count], ax = axes[column], bins = 30)
+            axes_rows = (len(columns) // n_columns) + 1
 
-        try:
-            axes[column].set(xlabel = features_names[count])
-        except:
-            pass
+        return axes_rows
 
-        if (count + 1) < df.shape[1]:
-                count += 1
-        else:
-            break
+    #####
+    def rows_plotter(self, n_columns, kind, figsize, features_names = None):
+        fig, axes = plt.subplots(1, n_columns, figsize = figsize)
+        count = 0
 
-    return fig
-    
-#####
-def multi_axes_plotter(df, n_columns, kind, figsize, features_names = None):
-    # Calculating the number of rows from number of columns and variables to plot
-    n_rows_ = n_rows(df, n_columns)
-
-    # Creating the figure and as many axes as needed
-    fig, axes = plt.subplots(n_rows_, n_columns, figsize = figsize)
-    # To keep the count of the plotted variables
-    count = 0
-
-    # Some transformation, because with only one row, the shape is: (2,)
-    axes_col = axes.shape[0]
-    try:
-        axes_row = axes.shape[1]
-    except:
-        axes_row = 1
-
-    
-    for row in range(axes_col):
-        for column in range(axes_row):
+        for column in range(n_columns):
             if kind == "strip":
-                sns.stripplot(y = df.iloc[:, count], ax = axes[row][column])
+                sns.stripplot(y = self.df.iloc[:, count], ax = axes[column])
             elif kind == "dist":
-                sns.distplot(df.iloc[:, count], ax = axes[row][column])
+                sns.distplot(self.df.iloc[:, count], ax = axes[column])
             elif kind == "box":
-                sns.boxplot(df.iloc[:, count], ax = axes[row][column])
+                sns.boxplot(self.df.iloc[:, count], ax = axes[column])
             else:
-                sns.histplot(df.iloc[:, count], ax = axes[row][column], bins = 30)
+                sns.histplot(self.df.iloc[:, count], ax = axes[column], bins = 30)
 
             try:
-                axes[row][column].set(xlabel = features_names[count])
+                axes[column].set(xlabel = self.features_names[count])
             except:
                 pass
 
             if (count + 1) < df.shape[1]:
-                count += 1
+                    count += 1
             else:
                 break
 
-    return fig
+        return fig
+        
+    #####
+    def multi_axes_plotter(self, n_columns, kind, figsize):
+        # Calculating the number of rows from number of columns and variables to plot
+        n_rows_ = self.__n_rows(n_columns)
+
+        # Creating the figure and as many axes as needed
+        fig, axes = plt.subplots(n_rows_, n_columns, figsize = figsize)
+        # To keep the count of the plotted variables
+        count = 0
+
+        # Some transformation, because with only one row, the shape is: (2,)
+        axes_col = axes.shape[0]
+        try:
+            axes_row = axes.shape[1]
+        except:
+            axes_row = 1
+
+        # Plotting rows and columns
+        for row in range(axes_col):
+            for column in range(axes_row):
+                if kind == "strip":
+                    sns.stripplot(y = self.df.iloc[:, count], ax = axes[row][column])
+                elif kind == "dist":
+                    sns.distplot(self.df.iloc[:, count], ax = axes[row][column])
+                elif kind == "box":
+                    sns.boxplot(self.df.iloc[:, count], ax = axes[row][column])
+                else:
+                    sns.histplot(self.df.iloc[:, count], ax = axes[row][column], bins = 30)
+
+                try:
+                    axes[row][column].set(xlabel = self.features_names[count])
+                except:
+                    pass
+
+                if (count + 1) < self.df.shape[1]:
+                    count += 1
+                else:
+                    break
+        return fig
+
+    #####
+    def correlation_matrix(self, figsize):
+        fig = plt.figure(figsize = figsize)
+        sns.heatmap(self.df.corr(), annot = True, linewidths = .1,
+                    cmap = "Blues", xticklabels = False,
+                    yticklabels = self.features_names, cbar = False)
+
+        return fig
 
 ##################################################### ML METRICS PLOTTERS #####################################################
 #####
