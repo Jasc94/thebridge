@@ -1,7 +1,7 @@
 import pymysql
 
 class MySQL:
-
+    #####
     def __init__(self, IP_DNS, USER, PASSWORD, DB_NAME, PORT):
         self.IP_DNS = IP_DNS
         self.USER = USER
@@ -37,6 +37,7 @@ class MySQL:
         result = 0
         try :
             # Execute SQL command
+            self.cursor.execute(sql)
             self.db.commit()
             print("Executed \n\n" + str(sql) + "\n\n succesfully")
             result = 1
@@ -66,3 +67,9 @@ class MySQL:
             print("Error: unable to fetch the data")
 
         return results      # list of lists
+
+    #####
+    def insert_into_predictions(self, to_insert):
+        sql = """INSERT INTO predictions (model, RIDAGEYR, BPXDI1, BPXSY1, BMXWT, BMXWAIST, LBXTC, LBXSGL, MEANCHOL, MEANTFAT, MEANSFAT, MEANSUGR, MEANFIBE, MEANTVB6, FEMALE, MALE, prediction) VALUES ('""" + to_insert[0] + """', '""" + to_insert[1] + """', '""" + to_insert[2] + """', '""" + to_insert[3] + """', '""" + to_insert[4] + """', '""" + to_insert[5] + """', '""" + to_insert[6] + """', '""" + to_insert[7] + """', '""" + to_insert[8] + """', '""" + to_insert[9] + """', '""" + to_insert[10] + """', '""" + to_insert[11] + """', '""" + to_insert[12] + """', '""" + to_insert[13] + """', '""" + to_insert[14] + """', '""" + to_insert[15] + """', '""" + to_insert[16] + """')"""
+
+        return sql

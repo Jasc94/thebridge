@@ -16,6 +16,11 @@ from sklearn.model_selection import train_test_split, RepeatedStratifiedKFold
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers, models, callbacks
+from keras.models import load_model
+
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -48,7 +53,7 @@ import utils.sql_tb as sq
 ##################################################### PULLING THE DATA #####################################################
 #########
 @st.cache
-def get_sql_data():
+def sql_settings():
     # Server info
     sql_settings_path = fo.path_to_folder(1, "sql") + "sql_server_settings.json"
     read_json = md.read_json_to_dict(sql_settings_path)
@@ -61,6 +66,11 @@ def get_sql_data():
 
     # Connection to the database
     sql_db = sq.MySQL(IP_DNS, USER, PASSWORD, DB_NAME, PORT)
+    return sql_db
+
+#########
+@st.cache
+def get_sql_data(sql_db):
     sql_db.connect()
 
     # Query
@@ -77,6 +87,9 @@ def get_sql_data():
     results = sql_db.execute_get_sql(sql_query_2)
     column_names = [tuple[0] for tuple in sql_db.cursor.description]
     model_comparison_2 = pd.DataFrame(results, columns = column_names)
+
+    # Close connection
+    sql_db.close()
 
     return model_comparison_1, model_comparison_2
 
@@ -109,12 +122,16 @@ def get_data(allow_output_mutation=True):
 #########
 @st.cache
 def get_models():
-    best_ml_model_path = fo.path_to_folder(2, "models") + "best_ml_model.pkl"
-    best_ml_model = joblib.load(best_ml_model_path)
-    return best_ml_model
+    models_path = fo.path_to_folder(2, "models") 
+    ml_model = joblib.load(models_path + "best_ml_model.pkl")
+
+    return ml_model
 
 #########
-model_comparison_1, model_comparison_2 = get_sql_data()
+sql_db = sql_settings()
+
+#########
+model_comparison_1, model_comparison_2 = get_sql_data(sql_db)
 
 #########
 vardata, dataset = get_data()
@@ -126,7 +143,7 @@ vars_nom_descr = vardata.vars_descr_detector(vars_nom, nom_included = True)
 variables_df = vardata.df.iloc[:, [0, 1, -2]]
 
 #########
-best_ml_model = get_models()
+ml_model = get_models()
 
 
 ##################################################### INTERFACE #####################################################
@@ -415,6 +432,10 @@ def saved_ml_models():
 
 #########
 def predictor():
+    st.sidebar.write("Predict whether or not you can have a cardiovascular disease")
+    predict_button = st.sidebar.button("Predict health")
+
+    # Form for the prediction
     expander = st.beta_expander("Find out if you are at risk of heart disease")
     with expander:
         cols = st.beta_columns(3)
@@ -451,19 +472,33 @@ def predictor():
         st.write("\* Blood levels", value = 68)
         st.write("** Usual intake (diet habits)", value = 68)
 
-    st.sidebar.write("Predict whether or not you can have a cardiovascular disease")
-    predict_button = st.sidebar.button("Predict health")
-
+    # Predictions
     if predict_button:
         to_predict = [md.to_float(val) for val in to_predict]
-        to_predict = np.array(to_predict).reshape(1, -1)
+        to_predict_arr = np.array(to_predict).reshape(1, -1)
 
-        prediction = best_ml_model.predict(to_predict)
-        if prediction == 1:
-            st.write("You are at risk of having a cardiovascular disease")
+        ml_prediction = ml_model.predict(to_predict_arr)
+        
+        st.sidebar.write("Scroll down to see the prediction!")
+        if ml_prediction[0] == 1:
+            st.subheader("You are at risk of having a cardiovascular disease")
+            st.write(f"Prediction made by machine learning model: {ml_model}")
         else:
-            st.write("You are not at risk of having a cardiovascular disease")
+            st.subheader("You are not at risk of having a cardiovascular disease")
+            st.write(f"Prediction made by machine learning model: {ml_model}")
 
+        # Saving prediction into database
+        to_db = [ml_model] + to_predict + [ml_prediction[0]]
+        to_db = [str(val) for val in to_db]
+
+        try:
+            sql_db.connect()
+            sql_insert = sql_db.insert_into_predictions(to_db)
+            sql_db.execute_interactive_sql(sql_insert)
+            sql_db.close()
+        except:
+            raise Exception
+    
 #########
 def api():
     data_checkbox = st.sidebar.checkbox(label = "Data")

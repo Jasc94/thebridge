@@ -180,12 +180,12 @@ class neural_network_plotter():
         self.dataset = dataset
 
     def model_progression(self, history):
-        accuracy = history.history["accuracy"]
+        accuracy = history.history["binary_accuracy"]
         loss = history.history["loss"]
 
         fig, ax = plt.subplots(1, 2, figsize = (12, 6))
         ax[0].plot(accuracy)
-        ax[0].set_title("Accuracy")
+        ax[0].set_title("Binary Accuracy")
         ax[1].plot(loss, c = "orange")
         ax[1].set_title("Loss")
         return fig

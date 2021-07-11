@@ -102,6 +102,11 @@ def sql_database():
     else:
         return "Wrong password"
 
+@app.route("/save-predictions")
+def save_predictions():
+    
+    pass
+
 ##################################################### MAIN FUNCTION #####################################################
 def main():
     print("--- STARTING PROCESS ---")
