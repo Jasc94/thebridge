@@ -54,6 +54,9 @@ import utils.sql_tb as sq
 #########
 @st.cache
 def sql_settings():
+    '''
+    To create the connection with the database for later user
+    '''
     # Server info
     sql_settings_path = fo.path_to_folder(1, "sql") + "sql_server_settings.json"
     read_json = md.read_json_to_dict(sql_settings_path)
@@ -71,6 +74,9 @@ def sql_settings():
 #########
 @st.cache
 def get_sql_data(sql_db):
+    '''
+    To get the models data
+    '''
     sql_db.connect()
 
     # Query
@@ -96,6 +102,9 @@ def get_sql_data(sql_db):
 #########
 @st.cache
 def get_data(allow_output_mutation=True):
+    '''
+    To get variables data: names, descriptions, years, etc...
+    '''
     #### Variables data
     vardata_downpath = "data" + sep + "6_variables" + sep + "0_final_variables.csv"
     vardata = md.variables_data()
@@ -122,18 +131,21 @@ def get_data(allow_output_mutation=True):
 #########
 @st.cache
 def get_models():
+    '''
+    To get the ml model
+    '''
     models_path = fo.path_to_folder(2, "models") 
     ml_model = joblib.load(models_path + "best_ml_model.pkl")
 
     return ml_model
 
-#########
+######### Save database connection
 sql_db = sql_settings()
 
-#########
+######### Save models' comparisons
 model_comparison_1, model_comparison_2 = get_sql_data(sql_db)
 
-#########
+######### Save variables data and dataset object
 vardata, dataset = get_data()
 ml_dataset = copy.deepcopy(dataset)        # Support object for "Predictor section"
 vars_nom = list(dataset.df.columns)
@@ -142,7 +154,7 @@ vars_nom_descr = vardata.vars_descr_detector(vars_nom, nom_included = True)
 
 variables_df = vardata.df.iloc[:, [0, 1, -2]]
 
-#########
+######### Save machine learning model
 ml_model = get_models()
 
 
@@ -213,14 +225,17 @@ def eda():
         data = dataset.filter_columns(features)
         filtered_data = data.dropna()
 
+        # Data description and some processing for later plotting
         data_stats = filtered_data.describe().T
         data_stats = data_stats.reset_index()
         data_stats = data_stats.drop("count", axis = 1)
         data_stats = data_stats.applymap(lambda x: md.round_number(x, 3))
         data_columns = list(data_stats.columns)
 
+        # Correlations
         corr = np.array(filtered_data.corr().applymap(lambda x: round(x, 3)))
 
+        # Get variables' descriptions
         y_descr = vardata.var_descr_detector(y)
         X_descr = vardata.vars_descr_detector(X, cut = 30)
         descrs = [y] + X_descr
@@ -229,6 +244,7 @@ def eda():
         table_header = data_columns
         table_data = [data_stats.iloc[:, column].values for column in range(len(data_columns))]
 
+        # Table with variables' info
         table = go.Figure(data = go.Table(
                         columnwidth = [20, 10, 10, 10, 10, 10, 10, 10],
                         header = dict(values = table_header,
@@ -242,6 +258,8 @@ def eda():
                         font = dict(size = 16),
                         height = 30)
                         ))
+
+        # To adjust the height of the table and avoid as much as possible too much white space
         if len(features) < 6:
             table.update_layout(autosize = False, width = 600, height = 150,
                                 margin = dict(l = 0, r = 0, b = 0, t = 0))
@@ -249,9 +267,11 @@ def eda():
             table.update_layout(autosize = False, width = 600, height = 200,
                                 margin = dict(l = 0, r = 0, b = 0, t = 0))
 
+        # Show the table
         st.write(table)
 
-        # Data insights
+        ### Data insights
+        # Expander
         expander = st.beta_expander("Insights on the data")
         with expander:
             st.write("**Chosen variables**:")
@@ -269,20 +289,22 @@ def eda():
             st.write("More info in the following link:")
             st.markdown(nahnes_url, unsafe_allow_html=True)
 
-        # Correlation plot
+        ### Correlation plot
         st.write(y_descr)
         colorscale = [[0, "white"], [1, "cornflowerblue"]]
         correlation_plot = ff.create_annotated_heatmap(corr,
                                                        #x = descrs,
                                                        y = descrs,
                                                        colorscale = colorscale)
+        # Show the correlation plot
         st.write(correlation_plot)
 
-        # Distribution plots
+        # Distribution plots for each chosen variable
         for x in X:
             x_descr = vardata.var_descr_detector(x, cut = 30, nom_included = True)
             expander = st.beta_expander(x_descr)
 
+            # within expanders to ease the navigability
             with expander: 
                 to_plot = filtered_data.loc[:, [y, x]].dropna()
                 histogram = px.histogram(to_plot, x = x, color = y,
@@ -328,11 +350,13 @@ def model_testing():
     chosen_model = cols[1].selectbox(label = "Choose the model",
                          options = ["Logistic Regression", "Random Forest Classifier", "SVM"])
     
+    # Show LogisticRegression options
     if chosen_model == "Logistic Regression":
         max_iter = cols[1].slider(label = "Max iterations", min_value = 100, max_value= 400, step = 100)
         model = LogisticRegression(n_jobs = -1, random_state = seed,
                                    max_iter = max_iter)
     
+    # Show RandomForest options
     if chosen_model == "Random Forest Classifier":
         n_estimators = cols[1].slider(label = "Number of estimators", min_value = 100, max_value= 250, step = 50)
         max_depth = cols[1].slider(label = "Max depth", min_value = 10, max_value= 30, step = 5)
@@ -342,13 +366,13 @@ def model_testing():
                                        max_depth = max_depth,
                                        max_features = max_features)
 
+    # Show SVM options
     if chosen_model == "SVM":
         max_iter = cols[1].slider(label = "Max iterations", min_value = 100, max_value= 200, step = 20)
         model = LinearSVC(random_state = seed,
                           max_iter = max_iter)
 
-    
-    ##### Model training
+    ### Model training
     if train_button:
         # Data processing according to chosen settings
         ml_dataset.filter_columns(features, inplace = True)
@@ -379,19 +403,20 @@ def model_testing():
 
         st.write(fig)
 
+    # Model testing
     if test_button:
         # Data processing according to chosen settings
         ml_dataset.filter_columns(features, inplace = True)
         ml_dataset.df = ml_dataset.df.dropna()
         ml_dataset.model_data(split, cv, scaler = scaler, balance = balance)
 
-        # Model training
+        # Model training-testing
         my_model = mo.ml_model(model)
         my_model.load_data(ml_dataset.X_train, ml_dataset.X_test, ml_dataset.y_train, ml_dataset.y_test, features, ml_dataset.kfold)
         my_model.ml_trainer()
         my_model.ml_tester()
 
-        #st.write(my_model.cm)
+        # Model metrics
         st.subheader("Confusion matrix")
         confusion_matrix = [my_model.cm[1], my_model.cm[0]]
         colorscale = [[0, "white"], [1, "cornflowerblue"]]
@@ -399,8 +424,10 @@ def model_testing():
                                                        x = ["Negative", "Positive"],
                                                        y = ["Positive", "Negative"],
                                                        colorscale = colorscale)
+        # Show the plot
         st.write(correlation_plot)
 
+        # Some extra insights within the expander
         expander = st.beta_expander("More info on the model and training")
         with expander:
             st.write("**Structures**:")
@@ -465,21 +492,28 @@ def predictor():
         MEANFIBE = cols[2].text_input("Total Fiber (g) **", value = 16)
         MEANTVB6 = cols[2].text_input("Total Vitamin B6 (mg) **", value = 2)
 
+        # Annotations
+        st.write("\* Blood levels", value = 68)
+        st.write("** Usual intake (diet habits)", value = 68)
+
+         # Gathering all the form data
         to_predict = [RIDAGEYR, BPXDI1, BPXSY1, BMXWT, BMXWAIST, LBXTC,
                       LBXSGL, MEANCHOL, MEANTFAT, MEANSFAT, MEANSUGR, MEANFIBE,
                       MEANTVB6, FEMALE, MALE]
 
-        st.write("\* Blood levels", value = 68)
-        st.write("** Usual intake (diet habits)", value = 68)
-
     # Predictions
     if predict_button:
+        # Processing data for the model
         to_predict = [md.to_float(val) for val in to_predict]
         to_predict_arr = np.array(to_predict).reshape(1, -1)
 
+        # Prediction
         ml_prediction = ml_model.predict(to_predict_arr)
         
+        # Note to the user
         st.sidebar.write("Scroll down to see the prediction!")
+
+        #Showing the prediction
         if ml_prediction[0] == 1:
             st.subheader("You are at risk of having a cardiovascular disease")
             st.write(f"Prediction made by machine learning model: {ml_model}")
@@ -487,11 +521,12 @@ def predictor():
             st.subheader("You are not at risk of having a cardiovascular disease")
             st.write(f"Prediction made by machine learning model: {ml_model}")
 
-        # Saving prediction into database
+        # Procesing to save the predicion into the sql database
         to_db = [ml_model] + to_predict + [ml_prediction[0]]
         to_db = [str(val) for val in to_db]
 
         try:
+            # Connect with the database and insert the values
             sql_db.connect()
             sql_insert = sql_db.insert_into_predictions(to_db)
             sql_db.execute_interactive_sql(sql_insert)
@@ -501,15 +536,20 @@ def predictor():
     
 #########
 def api():
-    data_checkbox = st.sidebar.checkbox(label = "Data")
-    variables_checkbox = st.sidebar.checkbox(label = "Variables")
-    sql_checkbox = st.sidebar.checkbox(label = "Save data in SQL")
+    # Choose what you want to do
+    selection = st.sidebar.radio("Choose:",
+                               options = ["Cleaned data",
+                                          "Variables' names",
+                                          "Insert data into SQL"])
 
+
+    # Enter the password
     password = st.sidebar.text_input("Password to access data")
     button = st.sidebar.button("Get data")
 
     if button:
-        if data_checkbox:
+        # See cleaned data
+        if selection == "Cleaned data":
             try:
                 url = f"http://localhost:6060/data?password={password}"
                 data = pd.read_json(url)
@@ -518,7 +558,8 @@ def api():
                 st.header("It wasn't possible to gather the data")
                 st.write("Please check the password or confirm that the server is running")
 
-        if variables_checkbox:
+        # See variable names
+        if selection == "Variables' names":
             try:
                 url = f"http://localhost:6060/variables-data?password={password}"
                 data = pd.read_json(url)
@@ -526,7 +567,9 @@ def api():
             except:
                 st.header("It wasn't possible to gather the data")
                 st.write("Please check the password or confirm that the server is running")
-        if sql_checkbox:
+        
+        # Insert cleaned data into the sql database
+        if selection == "Insert data into SQL":
             try:
                 url = f"http://localhost:6060/sql-database?password={password}"
                 requests.get(url)

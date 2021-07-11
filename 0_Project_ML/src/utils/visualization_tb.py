@@ -22,12 +22,23 @@ import mining_data_tb as md
 ##################################################### PLOTTERS #####################################################
 #####
 class eda_plotter():
+    '''
+    Class to perform some exploratory analysis on the data
+    '''
     def __init__(self, df, features_names):
+        '''
+        It receives a dataframe and the features' names
+        '''
         self.df = df
         self.features_names = features_names
 
     #####
     def __n_rows(self, n_columns):
+        '''
+        It calculates the number of rows (for the axes) depending on the number of variables to plot and the columns we want for the figure.
+        args:
+        n_columns: number of columns
+        '''
         columns = list(self.df.columns)
 
         if len(columns) % n_columns == 0:
@@ -38,10 +49,19 @@ class eda_plotter():
         return axes_rows
 
     #####
-    def rows_plotter(self, n_columns, kind, figsize, features_names = None):
+    def rows_plotter(self, n_columns, kind, figsize):
+        '''
+        It plots all the variables in one row. It returns a figure
+        args:
+        n_columns: number of columns for the row
+        kind: ("strip", "dist", "box")
+        figsize: size of the figure
+        '''
+        # creates a figure with one axis and n_columns
         fig, axes = plt.subplots(1, n_columns, figsize = figsize)
         count = 0
 
+        # Loop thorugh the generated axes
         for column in range(n_columns):
             if kind == "strip":
                 sns.stripplot(y = self.df.iloc[:, count], ax = axes[column])
@@ -66,6 +86,12 @@ class eda_plotter():
         
     #####
     def multi_axes_plotter(self, n_columns, kind, figsize):
+        '''
+        It creates a plot with multiple rows and columns. It returns a figure.
+        n_columns: number of columns for the row
+        kind: ("strip", "dist", "box")
+        figsize: size of the figure
+        '''
         # Calculating the number of rows from number of columns and variables to plot
         n_rows_ = self.__n_rows(n_columns)
 
@@ -81,8 +107,9 @@ class eda_plotter():
         except:
             axes_row = 1
 
-        # Plotting rows and columns
+        # Loop through rows
         for row in range(axes_col):
+            # Loop through columns
             for column in range(axes_row):
                 if kind == "strip":
                     sns.stripplot(y = self.df.iloc[:, count], ax = axes[row][column])
@@ -106,6 +133,9 @@ class eda_plotter():
 
     #####
     def correlation_matrix(self, figsize):
+        '''
+        It plots a correlation matrix. It returns a figure
+        '''
         fig = plt.figure(figsize = figsize)
         sns.heatmap(self.df.corr(), annot = True, linewidths = .1,
                     cmap = "Blues", xticklabels = False,
@@ -116,11 +146,20 @@ class eda_plotter():
 ##################################################### ML METRICS PLOTTERS #####################################################
 #####
 class ml_model_plotter():
+    '''
+    Class to plot machine learning model results
+    '''
     def __init__(self, ml_model):
+        '''
+        It receives the machine learning model object
+        '''
         self.ml_model = ml_model
 
     #####
     def train_val_plot(self, figsize = (14, 6)):
+        '''
+        It plots training scores vs validation scores. It returns a figure
+        '''
         fig = plt.figure(figsize = figsize)
         sns.set_theme()
 
@@ -134,6 +173,9 @@ class ml_model_plotter():
 
     #####
     def test_metrics(self, figsize = (12, 12)):
+        '''
+        It plots the metrics after training with the full training data and testing with the test data. It returns a figure
+        '''
         # Calculate the row/column totals for later use
         row_sums = self.ml_model.cm.sum(axis = 1, keepdims = True)
         column_sums = self.ml_model.cm.sum(axis = 0, keepdims = True)
@@ -175,11 +217,22 @@ class ml_model_plotter():
 ##################################################### NEURAL NETWORK PLOTTERS #####################################################
 #####
 class neural_network_plotter():
+    '''
+    Class to plot neural network model results
+    '''
     def __init__(self, neural_network, dataset):
+        '''
+        It receives the neural network model and the dataset
+        '''
         self.model = neural_network
         self.dataset = dataset
 
     def model_progression(self, history):
+        '''
+        It plots model accuracy and loss function.
+        args:
+        history: keras history attribute
+        '''
         accuracy = history.history["binary_accuracy"]
         loss = history.history["loss"]
 
@@ -191,6 +244,9 @@ class neural_network_plotter():
         return fig
 
     def test_results(self, figsize = (14, 14)):
+        '''
+        It plots the metrics after training with the full training data and testing with the test data. It returns a figure
+        '''
         X_train = self.dataset.X_train
         y_train = self.dataset.y_train
         X_test = self.dataset.X_test

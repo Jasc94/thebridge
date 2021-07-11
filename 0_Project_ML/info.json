@@ -1,0 +1,12 @@
+{
+    "project_name" : "Detecting the risk of having cardiovascular diseases",
+    "author" : "Jonathan Suárez Cáceres",
+    "linkedin" : "linkedin.com/in/jsuarezcaceres",
+    "e_mail" : "jonathansaurezcaceres@gmail.com",
+    "project_title" : "Are you at risk oh having/developing a cardiovascular disease based on key nutritional and physical attributes?",
+    "project_description" : "Using the data from NAHNES (National Health and Nutrition Examination Survey - USA), I tried to predict if a person has or could devlop a heart disease.",
+    "flask_port" : "6060",
+    "streamlit_port" : "8501",
+    "links" : "https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?BeginYear=2017",
+    "python_libraries_used" : ["streamlit", "pandas", "numpy", "sklearn", "tensorflow", "keras", "joblib", "SQLAlchemy", "flask", "matplotlib", "seaborn", "argparse", "requests", "BeautifulSoup", "sys", "os", "varname", "re", "webbrowser", "base58", "json"]
+}

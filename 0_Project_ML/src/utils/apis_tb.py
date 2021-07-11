@@ -2,7 +2,10 @@ from flask import Flask, request, render_template, Response
 from imblearn.over_sampling import SMOTE
 from sqlalchemy import create_engine
 
+import numpy as np
 import pandas as pd
+import joblib
+import json
 
 import sys, os, argparse
 
@@ -27,6 +30,7 @@ app = Flask(__name__)
 data_password = "12345"
 variables_password = "123456"
 sql_password = "1234567"
+model_password = "12345678"
 
 ##################################################### FLASK FUNCTIONS #####################################################
 #####
@@ -34,8 +38,12 @@ sql_password = "1234567"
 def home():
     return "Gracias por venir"
 
+#####
 @app.route("/data", methods = ["GET"])
 def data():
+    '''
+    Access to the cleaned dataset
+    '''
     x = request.args["password"]
 
     if x == data_password:
@@ -46,8 +54,12 @@ def data():
     else:
         return "Wrong password"
 
+#####
 @app.route("/variables-data", methods = ["GET"])
 def variables_data():
+    '''
+    Access to the variables data
+    '''
     x = request.args["password"]
 
     if x == variables_password:
@@ -58,8 +70,12 @@ def variables_data():
     else:
         return "Wrong password"
 
+#####
 @app.route("/sql-database", methods = ["GET"])
 def sql_database():
+    '''
+    To insert the claned dataset into the sql database
+    '''
     x = request.args["password"]
 
     if x == sql_password:
@@ -101,11 +117,6 @@ def sql_database():
     
     else:
         return "Wrong password"
-
-@app.route("/save-predictions")
-def save_predictions():
-    
-    pass
 
 ##################################################### MAIN FUNCTION #####################################################
 def main():
