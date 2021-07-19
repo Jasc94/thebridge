@@ -4,7 +4,7 @@
 
 # https://discuss.streamlit.io/t/problem-deploying-streamlit-app-with-docker/1644/4
 
-DOCKER_BUILD="ml_project_image:latest"
+DOCKER_BUILD="eda_project_image:latest"
 DOCKER_ID=$(docker ps -a -q --filter ancestor=${DOCKER_BUILD} --format="{{.ID}}")
 sudo docker rm $(docker stop $(docker ps -a -q --filter ancestor=${DOCKER_BUILD} --format="{{.ID}}"))
 

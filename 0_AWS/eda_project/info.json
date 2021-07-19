@@ -1,0 +1,12 @@
+{
+    "project_name" : "Animal-based products vs Plant-based producuts from an efficiency standpoint",
+    "author" : "Jonathan Suárez Cáceres",
+    "linkedin" : "linkedin.com/in/jsuarezcaceres",
+    "e_mail" : "jonathansaurezcaceres@gmail.com",
+    "project_title" : "What foods are more efficient when thinking from a cost-benefit (resources-nutritional value) point of view",
+    "project_description" : "Is eating animal products efficient or is there a more sustainable way to eat?",
+    "flask_port" : "6060",
+    "streamlit_port" : "En int el número que se usa al abrir streamlit (puedes verlo al cargar streamlit en localhost)",
+    "links" : "Enlaces a otros recursos online donde se pueda ahondar en tu proyecto",
+    "python_libraries_used" : ["streamlit", "pandas", "numpy", "flask", "matplotlib", "seaborn", "argparse", "requests", "BeautifulSoup", "sys", "os", "varname", "re", "webbrowser", "base58", "json"]
+}
